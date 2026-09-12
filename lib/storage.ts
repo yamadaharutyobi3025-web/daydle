@@ -279,6 +279,16 @@ export function setJournalEntry(
   saveState(state);
 }
 
+/**
+ * 1日1遠回りの共通判定。今日すでにcompletedの記録が1件でもあればtrue。
+ * 「今日」「みんな」「共有カード」等、新しいmissionをaccepted状態にしうる
+ * すべての入口で、UI個別にロジックを持たずこの関数を使うこと。
+ */
+export function hasCompletedToday(): boolean {
+  const key = todayKey();
+  return getHistory().some((h) => h.date === key && h.status === "completed");
+}
+
 /** その日が、何回目の「完了した遠回り」かを返す（古い順に1から数える）。 */
 export function getDetourNumber(date: string): number {
   const completed = getHistory()

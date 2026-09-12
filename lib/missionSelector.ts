@@ -64,6 +64,11 @@ function isContextFeasible(
     return false;
   }
 
+  // 現在地から移動しないと成立しないミッションは、家にいるユーザーには原則出さない。
+  if (c.requiresTravel && ctx.placeContext === "home") {
+    return false;
+  }
+
   if (c.places?.length && ctx.placeContext && !c.places.includes(ctx.placeContext)) {
     return false;
   }
@@ -155,14 +160,13 @@ function rankByContext(pool: Mission[], input: SelectionInput): Mission[] {
  * 選択された時間・気分・いまの状況にもとづいて、今日の候補ミッション（最大3件）を選ぶ。
  *
  * 優先順位：
- * 1. 実行可能性（contextに明確に矛盾しない）
+ * 1. 実行不可能なmissionを除外（contextに明確に矛盾しない。家にいるのに
+ *    店員に話しかける／外の誰かに声をかける／現在地から移動しないと成立しない、等）
  * 2. duration完全一致
- * 3. placeContext
- * 4. schedulePressure（frictionLevelとの整合を含む）
- * 5. socialContext
- * 6. mood（この時点では既に完全一致が保証されている）
- * 7. 最近出ていないmission
- * 8. ランダム性
+ * 3. contextとの一致度（placeContext → schedulePressure(frictionLevelとの整合含む) → socialContext）
+ * 4. mood（この時点では既に完全一致が保証されている）
+ * 5. 最近出ていないmission
+ * 6. ランダム性
  *
  * data/missions.ts は「時間(5/15/30/60) × 気分(6種)」の24パターン全てに
  * 最低3件ずつ完全一致するミッションを持つように維持されている。
