@@ -30,6 +30,26 @@ export type MissionCategory =
   | "nostalgia"
   | "pointless";
 
+/**
+ * 完了画面（/complete）の文言を選ぶための分類。
+ * 選抜ロジック用の MissionCategory とは別軸（「何をしたか」の体感に合わせた分類）。
+ * 通常は category から自動変換されるが、映画・創作など体感がずれるミッションだけ
+ * ここで個別に上書きする。今後の特殊なミッション追加でも同じ要領で指定できる。
+ */
+export type CompletionCategory =
+  | "movie"
+  | "book"
+  | "walk"
+  | "outside"
+  | "create"
+  | "observe"
+  | "social"
+  | "quiet"
+  | "home"
+  | "nostalgia"
+  | "nature"
+  | "food";
+
 export interface Mission {
   id: string;
   title: string;
@@ -44,6 +64,8 @@ export interface Mission {
   costLevel: 0 | 1 | 2;
   category: MissionCategory;
   safetyNote?: string | null;
+  /** categoryからの自動変換では体感がずれる場合だけ指定する。 */
+  completionCategory?: CompletionCategory | null;
 }
 
 export interface CommunityMission {

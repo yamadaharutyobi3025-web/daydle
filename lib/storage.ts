@@ -46,6 +46,8 @@ export interface HistoryEntry {
 export interface DaydleState {
   today: TodayMissionState | null;
   history: HistoryEntry[];
+  /** 長時間ミッション解放の通知を、すでに表示した分数（一度きりの表示にするため）。 */
+  seenUnlocks: number[];
 }
 
 const STORAGE_KEY = "daydle_state_v1";
@@ -53,6 +55,7 @@ const STORAGE_KEY = "daydle_state_v1";
 const emptyState: DaydleState = {
   today: null,
   history: [],
+  seenUnlocks: [],
 };
 
 function isBrowser(): boolean {
@@ -128,6 +131,9 @@ export function loadState(): DaydleState {
       today: isValidTodayMissionState(parsed.today) ? parsed.today : null,
       history: Array.isArray(parsed.history)
         ? parsed.history.filter(isValidHistoryEntry)
+        : [],
+      seenUnlocks: Array.isArray(parsed.seenUnlocks)
+        ? parsed.seenUnlocks.filter((n): n is number => typeof n === "number")
         : [],
     };
   } catch {
@@ -229,6 +235,24 @@ export function getDetourNumber(date: string): number {
 
 export function getHistory(): HistoryEntry[] {
   return loadState().history;
+}
+
+/** 「できた」まで至った回数（長時間ミッションの解放判定に使う）。 */
+export function getCompletedCount(): number {
+  return getHistory().filter((h) => h.status === "completed").length;
+}
+
+/** 解放通知をすでに表示した分数の一覧。 */
+export function getSeenUnlocks(): number[] {
+  return loadState().seenUnlocks;
+}
+
+/** 指定した分数の解放通知を「表示済み」にする（以後は出さない）。 */
+export function markUnlockSeen(minutes: number): void {
+  const state = loadState();
+  if (state.seenUnlocks.includes(minutes)) return;
+  state.seenUnlocks = [...state.seenUnlocks, minutes];
+  saveState(state);
 }
 
 /** 直近14日間に登場したミッションIDの一覧（再抽選での重複回避に使う）。 */

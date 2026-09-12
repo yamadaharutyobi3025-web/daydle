@@ -935,6 +935,7 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "home",
     safetyNote: null,
+    completionCategory: "movie",
   },
   {
     id: "walk_010",
@@ -987,6 +988,7 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "home",
     safetyNote: null,
+    completionCategory: "create",
   },
 
   // --- 時間×気分のすべての組み合わせを補うための追加分 ---------------------

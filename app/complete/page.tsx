@@ -7,6 +7,7 @@ import { PosterSignature } from "@/components/PosterSignature";
 import { getTodayMission, type TodayMissionState } from "@/lib/storage";
 import { useClientSnapshot, UNLOADED } from "@/lib/useClientSnapshot";
 import { getCompletionMessage } from "@/lib/completionMessages";
+import { findMissionById } from "@/lib/missionSelector";
 import { todayKey } from "@/lib/date";
 
 export default function CompletePage() {
@@ -14,7 +15,8 @@ export default function CompletePage() {
 
   if (today === UNLOADED) return null;
 
-  const message = getCompletionMessage(today?.mood, today?.date ?? todayKey());
+  const mission = today ? findMissionById(today.missionId) : undefined;
+  const message = getCompletionMessage(mission, today?.mood, today?.date ?? todayKey());
 
   return (
     <main className="mx-auto flex min-h-[100dvh] w-full max-w-sm flex-col items-center justify-center px-8 text-center">

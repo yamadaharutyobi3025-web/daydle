@@ -1,15 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/Button";
 import type { Mood } from "@/types/mission";
 import { selectDailyCandidates } from "@/lib/missionSelector";
-import { setTodayMission } from "@/lib/storage";
+import {
+  getCompletedCount,
+  getSeenUnlocks,
+  markUnlockSeen,
+  setTodayMission,
+} from "@/lib/storage";
+import { getPendingUnlockNotice, getUnlockedMinutes } from "@/lib/unlocks";
 import { todayKey } from "@/lib/date";
 import { trackEvent } from "@/lib/track";
-
-const timeOptions = [5, 15, 30, 60];
 
 const moodOptions: { value: Mood; label: string }[] = [
   { value: "quiet", label: "静かに過ごしたい" },
@@ -24,6 +28,15 @@ export function WelcomeFlow({ onReady }: { onReady: () => void }) {
   const [minutes, setMinutes] = useState<number | null>(null);
   const [mood, setMood] = useState<Mood | null>(null);
   const canSubmit = minutes !== null && mood !== null;
+
+  const completedCount = getCompletedCount();
+  const timeOptions = getUnlockedMinutes(completedCount);
+  const pendingUnlock = getPendingUnlockNotice(completedCount, getSeenUnlocks());
+
+  useEffect(() => {
+    if (pendingUnlock) markUnlockSeen(pendingUnlock.minutes);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingUnlock?.minutes]);
 
   function handleSubmit() {
     if (minutes === null || mood === null) return;
@@ -66,6 +79,14 @@ export function WelcomeFlow({ onReady }: { onReady: () => void }) {
         <br />
         小さな遠回りを届けます。
       </p>
+
+      {pendingUnlock && (
+        <p className="mt-8 text-sm leading-[1.9] text-sage-deep animate-fade-in-slow">
+          {pendingUnlock.message.main}
+          <br />
+          {pendingUnlock.message.sub}
+        </p>
+      )}
 
       <section className="mt-10">
         <p className="text-[13px] text-ink-soft">今日はどれくらい時間がありますか？</p>
