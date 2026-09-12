@@ -303,7 +303,7 @@ DAYDLEのミッションは、交通ルール違反・危険な場所への立�
 
 1. [supabase.com](https://supabase.com) でプロジェクトを作成する
 2. Supabaseダッシュボード → SQL Editor で `supabase/migrations/0001_auth_foundation.sql` の中身を実行する
-3. Project Settings → API から `Project URL` と `anon public` キーを確認する
+3. Project Settings → API Keys から `Project URL` と `Publishable key`（`sb_publishable_...`）を確認する
 4. このフォルダに `.env.local` を作り、`.env.local.example` を参考に値を埋める
 5. `npm run dev` を再起動し、`/login` からメールアドレスでログインを試す
 
