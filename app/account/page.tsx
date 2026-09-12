@@ -26,6 +26,17 @@ export default async function AccountPage() {
     .eq("id", user.id)
     .single();
 
+  const [{ data: counts }, { count: pendingRequestCount }] = await Promise.all([
+    supabase.rpc("get_follow_counts", { target: user.id }),
+    supabase
+      .from("follows")
+      .select("*", { count: "exact", head: true })
+      .eq("followee_id", user.id)
+      .eq("status", "pending"),
+  ]);
+  const followersCount = counts?.[0]?.followers_count ?? 0;
+  const followingCount = counts?.[0]?.following_count ?? 0;
+
   return (
     <main className="mx-auto flex min-h-[100dvh] w-full max-w-sm flex-col px-6 pb-10 pt-14">
       <Logo size="md" />
@@ -56,16 +67,37 @@ export default async function AccountPage() {
 
       <p className="mt-4 text-xs text-ink-soft/70">{user.email}</p>
 
-      <div className="mt-6">
+      {profile && (
+        <div className="mt-6 flex gap-6 text-sm">
+          <Link href={`/u/${profile.username}/following`} className="text-ink-soft">
+            フォロー中 <span className="text-ink">{followingCount}</span>
+          </Link>
+          <Link href={`/u/${profile.username}/followers`} className="text-ink-soft">
+            フォロワー <span className="text-ink">{followersCount}</span>
+          </Link>
+        </div>
+      )}
+
+      <div className="mt-6 flex flex-col gap-3">
         <Link href="/account/edit">
           <Button variant="ghost" className="w-full">
             プロフィールを編集
           </Button>
         </Link>
+        <Link href="/account/requests">
+          <Button variant="ghost" className="w-full">
+            フォロー申請{pendingRequestCount ? `（${pendingRequestCount}）` : ""}
+          </Button>
+        </Link>
+        <Link href="/search">
+          <Button variant="ghost" className="w-full">
+            ユーザーを探す
+          </Button>
+        </Link>
       </div>
 
       <p className="mt-6 text-xs leading-loose text-ink-soft/70">
-        フォロー・投稿はこの後の段階で追加予定です。
+        投稿はこの後の段階で追加予定です。
       </p>
 
       <div className="mt-auto flex flex-col gap-3 pt-12">

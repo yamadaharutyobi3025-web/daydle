@@ -16,9 +16,9 @@ Supabase Auth + Postgres(RLS) + Storageを使う。
 
 ## 段階
 
-1. **Auth基盤**（実装中） — Supabase Auth、profiles、daily_completions同期
-2. プロフィール編集（username/display_name/avatar/bio/is_private）
-3. フォロー / フォロワー（公開即フォロー、非公開はリクエスト制）
+1. **Auth基盤**（完了） — Supabase Auth、profiles、daily_completions同期
+2. **プロフィール編集**（完了） — username/display_name/avatar/bio/is_private
+3. **フォロー / フォロワー**（完了） — 公開即フォロー、非公開はリクエスト制
 4. 投稿（完了記録から選んで明示的に投稿、写真は署名付きURLで表示）
 5. 「みんな」画面のSupabase版（フォロー中のタイムライン）
 
@@ -71,25 +71,40 @@ PK: `(user_id, date)`。RLSは本人のselect/insertのみ（update/deleteなし
 のORで判定する（いずれか一方だけを見ない）。これにより
 「未ログインで1回完了 → ログインしてフォロー中/みんなから2回目」を防ぐ。
 
-### follows（段階3で作成予定）
+### follows（段階3で作成済み）
 
 ```sql
 create table public.follows (
   follower_id uuid not null references auth.users (id) on delete cascade,
   followee_id uuid not null references auth.users (id) on delete cascade,
-  status text not null default 'accepted' check (status in ('pending', 'accepted')),
+  status text not null default 'pending' check (status in ('pending', 'accepted')),
   created_at timestamptz not null default now(),
   primary key (follower_id, followee_id),
   check (follower_id <> followee_id)
 );
 ```
 
-- follow実行時、相手の`profiles.is_private`を見てアプリ側が`status`を決める
-  （公開なら`accepted`、非公開なら`pending`）。
-- `pending`→ `accepted`への更新は`followee_id = auth.uid()`の本人のみ可能。
-- フォロー数・フォロワー数は集計してUIに出さない（競争要素を作らない方針）。
-- RLSのselectは本人が関わる行（follower or followee）のみ。一覧性のある
-  「誰が誰をフォローしているか」を第三者に見せる用途は今のところ作らない。
+- `status`はクライアントの指定を信用しない。`BEFORE INSERT`トリガー
+  （`follows_set_status()`）が、その時点の相手の`profiles.is_private`を見て
+  `pending`/`accepted`を強制的に決める（非公開アカウントへ`accepted`を
+  直接送りつける申請バイパスを防ぐ）。
+- `pending` → `accepted`への更新は`followee_id = auth.uid()`の本人のみ可能
+  （RLSの`using`/`with check`でこの遷移だけを許可）。
+- **段階1時点の「フォロー数は競争要素になるため非表示」という方針は撤回。**
+  ユーザーからの明示的な指示により、フォロー中/フォロワーの人数を常に表示し、
+  タップで一覧を見られるようにした。いいね数・XPのような競争演出（ランキング等）
+  は引き続き作らない。
+- 一覧・件数は素のテーブルRLSでは提供せず、`SECURITY DEFINER`関数
+  （`get_follow_counts` / `get_followers` / `get_following` /
+  `can_view_follow_lists`）経由でのみ提供する。理由: 「フォロー中一覧」と
+  「フォロワー一覧」のどちらを見ているかで、どちらのアカウントの公開設定を
+  見るべきかが変わり、行単位のRLS条件だけでは非公開アカウントの関係が
+  漏れる組み合わせを作れてしまうため。関数側で「対象アカウント(target)が
+  公開、または閲覧者が対象本人、または閲覧者が対象の承認済みフォロワー」を
+  判定してから返す。件数はこの判定に関わらず常に返す（人数自体は公開/非公開
+  の判断材料であり、隠す実益がないため）。
+- 素の`follows`テーブルのRLSのselectは、本人が関わる行（follower or
+  followee）のみ（自分の「フォロー中/フォロワー/自分宛の申請」の状態確認用）。
 
 ### posts（段階4で作成予定）
 

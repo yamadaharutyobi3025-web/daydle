@@ -299,10 +299,10 @@ DAYDLEのミッションは、交通ルール違反・危険な場所への立�
 
 `feature/social-v1` ブランチのみ。**設定しなくてもDAYDLE本体（今日/みんな/記録など）は今まで通り動きます。**未設定の間は `/login` にアクセスしても「Social機能はまだ準備中です」と表示されるだけです。
 
-現時点（段階1: Auth基盤）で試せるのは、ログイン（メールのマジックリンク）とアカウント画面だけです。プロフィール編集・フォロー・投稿はまだ実装していません。設計全体は `docs/social-v1-design.md` を参照してください。
+現時点（段階3: フォロー/フォロワーまで）で試せるのは、ログイン・プロフィール編集・フォロー/フォロワー・username検索です。投稿・「みんな」画面のSupabase版はまだ実装していません。設計全体は `docs/social-v1-design.md` を参照してください。
 
 1. [supabase.com](https://supabase.com) でプロジェクトを作成する
-2. Supabaseダッシュボード → SQL Editor で `supabase/migrations/0001_auth_foundation.sql` の中身を実行する
+2. Supabaseダッシュボード → SQL Editor で `supabase/migrations/` 配下のSQLファイルを **番号順に** 実行する（`0001_auth_foundation.sql` → `0002_grants.sql` → `0003_profile_edit.sql` → `0004_follows.sql`）
 3. Project Settings → API Keys から `Project URL` と `Publishable key`（`sb_publishable_...`）を確認する
 4. このフォルダに `.env.local` を作り、`.env.local.example` を参考に値を埋める
 5. `npm run dev` を再起動し、`/login` からメールアドレスでログインを試す
