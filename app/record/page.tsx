@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Logo } from "@/components/Logo";
 import { CurvedPath } from "@/components/CurvedPath";
 import { RecordPhoto } from "@/components/RecordPhoto";
@@ -128,6 +129,14 @@ export default function RecordPage() {
                 )}
                 {entry.hasPhoto && (
                   <RecordPhoto date={entry.date} onDeleted={() => setTick((t) => t + 1)} />
+                )}
+                {entry.status === "completed" && (
+                  <Link
+                    href={`/share/${entry.date}`}
+                    className="relative z-10 mt-4 inline-block touch-manipulation -mx-2 -my-2 px-2 py-2 text-[11px] text-sage-deep underline underline-offset-4"
+                  >
+                    共有カードをつくる
+                  </Link>
                 )}
               </li>
             );

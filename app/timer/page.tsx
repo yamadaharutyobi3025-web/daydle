@@ -67,7 +67,13 @@ export default function TimerPage() {
     <main className="mx-auto flex min-h-[100dvh] w-full max-w-sm flex-col items-center justify-center px-8 text-center">
       <div className="animate-fade-in flex flex-col items-center">
         <Logo size="sm" muted />
-        <p className="mt-14 font-serif-jp text-[52px] tabular-nums leading-none text-ink">
+
+        <p className="mt-12 text-xs tracking-[0.2em] text-sage-deep">今日の遠回り</p>
+        <p className="mt-4 font-serif-jp text-[18px] leading-[1.8] text-ink">
+          {mission.description}
+        </p>
+
+        <p className="mt-10 font-serif-jp text-[52px] tabular-nums leading-none text-ink">
           {formatCountdown(remainingMs)}
         </p>
         <p className="mt-8 text-[13px] leading-loose text-ink-soft">

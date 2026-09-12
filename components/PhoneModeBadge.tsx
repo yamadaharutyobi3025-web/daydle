@@ -8,7 +8,10 @@ const toolLabel: Record<AllowedTool, string> = {
   message: "メッセージ使用OK",
 };
 
-function getLabel(phoneMode: PhoneMode, allowedTools: AllowedTool[]): string {
+export function getPhoneModeLabel(
+  phoneMode: PhoneMode,
+  allowedTools: AllowedTool[]
+): string {
   if (phoneMode === "offline") return "OFFLINE";
   if (phoneMode === "connect") return "CONNECT";
   return allowedTools[0] ? toolLabel[allowedTools[0]] : "TOOL";
@@ -43,7 +46,7 @@ export function PhoneModeBadge({
     return (
       <span className="inline-flex items-center gap-1.5 text-[11px] tracking-wide text-ink-soft/60">
         <Icon phoneMode={phoneMode} allowedTools={allowedTools} className="h-[11px] w-[11px]" />
-        {getLabel(phoneMode, allowedTools)}
+        {getPhoneModeLabel(phoneMode, allowedTools)}
       </span>
     );
   }
@@ -51,7 +54,7 @@ export function PhoneModeBadge({
   return (
     <span className="inline-flex items-center gap-1.5 rounded-full bg-cream-deep/70 px-3 py-1 text-[11px] tracking-wide text-ink-soft">
       <Icon phoneMode={phoneMode} allowedTools={allowedTools} className="h-3 w-3 text-sage-deep" />
-      {getLabel(phoneMode, allowedTools)}
+      {getPhoneModeLabel(phoneMode, allowedTools)}
     </span>
   );
 }

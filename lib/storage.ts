@@ -210,6 +210,15 @@ export function setJournalEntry(
   saveState(state);
 }
 
+/** その日が、何回目の「完了した遠回り」かを返す（古い順に1から数える）。 */
+export function getDetourNumber(date: string): number {
+  const completed = getHistory()
+    .filter((h) => h.status === "completed")
+    .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+  const idx = completed.findIndex((h) => h.date === date);
+  return idx === -1 ? completed.length : idx + 1;
+}
+
 export function getHistory(): HistoryEntry[] {
   return loadState().history;
 }
