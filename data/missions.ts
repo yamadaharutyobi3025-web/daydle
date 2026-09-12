@@ -18,6 +18,8 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "walk",
     safetyNote: null,
+    contexts: { requiresOutside: true },
+    frictionLevel: 1,
   },
   {
     id: "walk_002",
@@ -31,6 +33,8 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "walk",
     safetyNote: null,
+    contexts: { requiresOutside: true },
+    frictionLevel: 1,
   },
   {
     id: "walk_003",
@@ -44,6 +48,8 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "walk",
     safetyNote: null,
+    contexts: { requiresOutside: true },
+    frictionLevel: 1,
   },
   {
     id: "walk_004",
@@ -57,6 +63,8 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "walk",
     safetyNote: "信号と車には十分注意してください。",
+    contexts: { requiresOutside: true },
+    frictionLevel: 1,
   },
   {
     id: "walk_005",
@@ -70,6 +78,7 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "walk",
     safetyNote: null,
+    frictionLevel: 0,
   },
   {
     id: "walk_006",
@@ -83,6 +92,8 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "walk",
     safetyNote: null,
+    contexts: { requiresOutside: true },
+    frictionLevel: 1,
   },
   {
     id: "walk_007",
@@ -96,6 +107,8 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "walk",
     safetyNote: null,
+    contexts: { requiresOutside: true },
+    frictionLevel: 2,
   },
   {
     id: "walk_008",
@@ -109,6 +122,8 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "walk",
     safetyNote: null,
+    contexts: { requiresOutside: true },
+    frictionLevel: 2,
   },
 
   // --- nature ---------------------------------------------------------
@@ -124,6 +139,8 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "nature",
     safetyNote: null,
+    contexts: { requiresOutside: true },
+    frictionLevel: 1,
   },
   {
     id: "nature_002",
@@ -137,6 +154,8 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "nature",
     safetyNote: null,
+    contexts: { requiresOutside: true },
+    frictionLevel: 1,
   },
   {
     id: "nature_003",
@@ -150,6 +169,8 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "nature",
     safetyNote: null,
+    contexts: { requiresOutside: true },
+    frictionLevel: 1,
   },
   {
     id: "nature_004",
@@ -163,6 +184,8 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "nature",
     safetyNote: null,
+    contexts: { requiresOutside: true },
+    frictionLevel: 1,
   },
   {
     id: "nature_005",
@@ -176,6 +199,8 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "nature",
     safetyNote: null,
+    contexts: { requiresOutside: true },
+    frictionLevel: 1,
   },
   {
     id: "nature_006",
@@ -189,6 +214,8 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "nature",
     safetyNote: "足元に注意してください。",
+    contexts: { requiresOutside: true },
+    frictionLevel: 2,
   },
 
   // --- quiet ---------------------------------------------------------
@@ -204,6 +231,7 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "quiet",
     safetyNote: null,
+    frictionLevel: 0,
   },
   {
     id: "quiet_002",
@@ -217,6 +245,7 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "quiet",
     safetyNote: null,
+    frictionLevel: 0,
   },
   {
     id: "quiet_003",
@@ -230,6 +259,8 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "quiet",
     safetyNote: null,
+    contexts: { places: ["home"] },
+    frictionLevel: 0,
   },
   {
     id: "quiet_004",
@@ -243,6 +274,7 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "quiet",
     safetyNote: null,
+    frictionLevel: 0,
   },
   {
     id: "quiet_005",
@@ -256,6 +288,7 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "quiet",
     safetyNote: null,
+    frictionLevel: 0,
   },
   {
     id: "quiet_006",
@@ -269,6 +302,7 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "quiet",
     safetyNote: null,
+    frictionLevel: 0,
   },
 
   // --- food ---------------------------------------------------------
@@ -284,6 +318,8 @@ export const missions: Mission[] = [
     costLevel: 1,
     category: "food",
     safetyNote: null,
+    contexts: { requiresOutside: true },
+    frictionLevel: 1,
   },
   {
     id: "food_002",
@@ -297,6 +333,7 @@ export const missions: Mission[] = [
     costLevel: 1,
     category: "food",
     safetyNote: null,
+    frictionLevel: 2,
   },
   {
     id: "food_003",
@@ -310,6 +347,8 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "food",
     safetyNote: null,
+    contexts: { requiresOutside: true },
+    frictionLevel: 1,
   },
   {
     id: "food_004",
@@ -323,6 +362,8 @@ export const missions: Mission[] = [
     costLevel: 1,
     category: "food",
     safetyNote: null,
+    contexts: { requiresOutside: true },
+    frictionLevel: 2,
   },
   {
     id: "food_005",
@@ -336,6 +377,7 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "food",
     safetyNote: null,
+    frictionLevel: 0,
   },
   {
     id: "food_006",
@@ -349,6 +391,8 @@ export const missions: Mission[] = [
     costLevel: 1,
     category: "food",
     safetyNote: null,
+    contexts: { requiresOutside: true },
+    frictionLevel: 3,
   },
 
   // --- book ---------------------------------------------------------
@@ -364,6 +408,8 @@ export const missions: Mission[] = [
     costLevel: 1,
     category: "book",
     safetyNote: null,
+    contexts: { requiresOutside: true },
+    frictionLevel: 2,
   },
   {
     id: "book_002",
@@ -377,6 +423,8 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "book",
     safetyNote: null,
+    contexts: { places: ["home"] },
+    frictionLevel: 0,
   },
   {
     id: "book_003",
@@ -390,6 +438,8 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "book",
     safetyNote: null,
+    contexts: { requiresOutside: true },
+    frictionLevel: 2,
   },
   {
     id: "book_004",
@@ -403,6 +453,7 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "book",
     safetyNote: null,
+    frictionLevel: 0,
   },
   {
     id: "book_005",
@@ -416,6 +467,8 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "book",
     safetyNote: null,
+    contexts: { places: ["home"] },
+    frictionLevel: 0,
   },
 
   // --- home ---------------------------------------------------------
@@ -431,6 +484,8 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "home",
     safetyNote: null,
+    contexts: { places: ["home"] },
+    frictionLevel: 0,
   },
   {
     id: "home_002",
@@ -444,6 +499,8 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "home",
     safetyNote: null,
+    contexts: { places: ["home"] },
+    frictionLevel: 0,
   },
   {
     id: "home_003",
@@ -457,6 +514,8 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "home",
     safetyNote: null,
+    contexts: { places: ["home"] },
+    frictionLevel: 0,
   },
   {
     id: "home_004",
@@ -470,6 +529,8 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "home",
     safetyNote: null,
+    contexts: { places: ["home"] },
+    frictionLevel: 0,
   },
   {
     id: "home_005",
@@ -483,6 +544,8 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "home",
     safetyNote: null,
+    contexts: { places: ["home"] },
+    frictionLevel: 0,
   },
   {
     id: "home_006",
@@ -496,6 +559,8 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "home",
     safetyNote: "火の取り扱いには十分注意してください。",
+    contexts: { places: ["home"] },
+    frictionLevel: 0,
   },
 
   // --- people (CONNECT) -----------------------------------------------
@@ -511,6 +576,7 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "people",
     safetyNote: null,
+    frictionLevel: 0,
   },
   {
     id: "people_002",
@@ -524,6 +590,7 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "people",
     safetyNote: null,
+    frictionLevel: 1,
   },
   {
     id: "people_003",
@@ -537,6 +604,7 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "people",
     safetyNote: null,
+    frictionLevel: 0,
   },
   {
     id: "people_004",
@@ -550,6 +618,8 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "people",
     safetyNote: null,
+    contexts: { requiresOutside: true, requiresOtherPeopleNearby: true },
+    frictionLevel: 2,
   },
   {
     id: "people_005",
@@ -563,6 +633,7 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "people",
     safetyNote: null,
+    frictionLevel: 0,
   },
   {
     id: "people_006",
@@ -576,6 +647,7 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "people",
     safetyNote: null,
+    frictionLevel: 0,
   },
 
   // --- adventure ---------------------------------------------------------
@@ -591,6 +663,8 @@ export const missions: Mission[] = [
     costLevel: 1,
     category: "adventure",
     safetyNote: null,
+    contexts: { requiresOutside: true },
+    frictionLevel: 1,
   },
   {
     id: "adventure_002",
@@ -604,6 +678,7 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "adventure",
     safetyNote: null,
+    frictionLevel: 1,
   },
   {
     id: "adventure_003",
@@ -617,6 +692,8 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "adventure",
     safetyNote: "人通りが少ない道や暗い道は避けてください。",
+    contexts: { requiresOutside: true },
+    frictionLevel: 2,
   },
   {
     id: "adventure_004",
@@ -630,6 +707,8 @@ export const missions: Mission[] = [
     costLevel: 1,
     category: "adventure",
     safetyNote: null,
+    contexts: { requiresOutside: true, requiresTravel: true },
+    frictionLevel: 2,
   },
   {
     id: "adventure_005",
@@ -643,6 +722,8 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "adventure",
     safetyNote: "周囲の安全を確認してから行ってください。",
+    contexts: { requiresOutside: true },
+    frictionLevel: 1,
   },
   {
     id: "adventure_006",
@@ -656,6 +737,8 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "adventure",
     safetyNote: null,
+    contexts: { requiresOutside: true },
+    frictionLevel: 1,
   },
 
   // --- nostalgia ---------------------------------------------------------
@@ -671,6 +754,7 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "nostalgia",
     safetyNote: null,
+    frictionLevel: 0,
   },
   {
     id: "nostalgia_002",
@@ -684,6 +768,8 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "nostalgia",
     safetyNote: null,
+    contexts: { requiresOutside: true },
+    frictionLevel: 2,
   },
   {
     id: "nostalgia_003",
@@ -697,6 +783,8 @@ export const missions: Mission[] = [
     costLevel: 1,
     category: "nostalgia",
     safetyNote: null,
+    contexts: { requiresOutside: true },
+    frictionLevel: 1,
   },
   {
     id: "nostalgia_004",
@@ -710,6 +798,8 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "nostalgia",
     safetyNote: null,
+    contexts: { places: ["home"] },
+    frictionLevel: 0,
   },
   {
     id: "nostalgia_005",
@@ -723,6 +813,7 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "nostalgia",
     safetyNote: null,
+    frictionLevel: 0,
   },
 
   // --- pointless（役に立たないけれど、なぜか少しやりたくなる） -----------
@@ -738,6 +829,8 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "pointless",
     safetyNote: null,
+    contexts: { requiresOutside: true },
+    frictionLevel: 2,
   },
   {
     id: "pointless_002",
@@ -751,6 +844,7 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "pointless",
     safetyNote: null,
+    frictionLevel: 0,
   },
   {
     id: "pointless_003",
@@ -764,6 +858,8 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "pointless",
     safetyNote: null,
+    contexts: { requiresOutside: true },
+    frictionLevel: 1,
   },
   {
     id: "pointless_004",
@@ -777,6 +873,8 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "pointless",
     safetyNote: null,
+    contexts: { requiresOutside: true },
+    frictionLevel: 1,
   },
   {
     id: "pointless_005",
@@ -790,6 +888,8 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "pointless",
     safetyNote: null,
+    contexts: { requiresOutside: true },
+    frictionLevel: 1,
   },
   {
     id: "pointless_006",
@@ -803,6 +903,7 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "pointless",
     safetyNote: null,
+    frictionLevel: 0,
   },
   {
     id: "pointless_007",
@@ -816,6 +917,8 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "pointless",
     safetyNote: null,
+    contexts: { requiresOutside: true },
+    frictionLevel: 1,
   },
   {
     id: "pointless_008",
@@ -829,6 +932,8 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "pointless",
     safetyNote: null,
+    contexts: { requiresOutside: true },
+    frictionLevel: 1,
   },
   {
     id: "pointless_009",
@@ -842,6 +947,8 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "pointless",
     safetyNote: null,
+    contexts: { requiresOutside: true },
+    frictionLevel: 1,
   },
   {
     id: "pointless_010",
@@ -855,6 +962,7 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "pointless",
     safetyNote: null,
+    frictionLevel: 0,
   },
 
   // --- 60分ミッション（じっくり遠回りしたい日用） ------------------------
@@ -870,6 +978,8 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "adventure",
     safetyNote: "帰りの交通手段を確認してから行ってください。",
+    contexts: { requiresOutside: true, requiresTravel: true },
+    frictionLevel: 3,
   },
   {
     id: "book_006",
@@ -883,6 +993,7 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "book",
     safetyNote: null,
+    frictionLevel: 0,
   },
   {
     id: "walk_009",
@@ -896,6 +1007,8 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "walk",
     safetyNote: "帰る時間と方向だけは把握しておいてください。",
+    contexts: { requiresOutside: true },
+    frictionLevel: 3,
   },
   {
     id: "nature_007",
@@ -909,6 +1022,8 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "nature",
     safetyNote: null,
+    contexts: { requiresOutside: true },
+    frictionLevel: 3,
   },
   {
     id: "quiet_007",
@@ -922,6 +1037,7 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "quiet",
     safetyNote: null,
+    frictionLevel: 1,
   },
   {
     id: "home_007",
@@ -936,6 +1052,8 @@ export const missions: Mission[] = [
     category: "home",
     safetyNote: null,
     completionCategory: "movie",
+    contexts: { places: ["home"] },
+    frictionLevel: 0,
   },
   {
     id: "walk_010",
@@ -949,6 +1067,8 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "walk",
     safetyNote: "暗い道や人通りの少ない道は避けてください。",
+    contexts: { requiresOutside: true },
+    frictionLevel: 3,
   },
   {
     id: "people_007",
@@ -962,6 +1082,7 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "people",
     safetyNote: null,
+    frictionLevel: 1,
   },
   {
     id: "nostalgia_006",
@@ -975,6 +1096,8 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "nostalgia",
     safetyNote: null,
+    contexts: { requiresOutside: true },
+    frictionLevel: 3,
   },
   {
     id: "home_008",
@@ -989,6 +1112,8 @@ export const missions: Mission[] = [
     category: "home",
     safetyNote: null,
     completionCategory: "create",
+    contexts: { places: ["home"] },
+    frictionLevel: 1,
   },
 
   // --- 時間×気分のすべての組み合わせを補うための追加分 ---------------------
@@ -1004,6 +1129,8 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "adventure",
     safetyNote: null,
+    contexts: { requiresOutside: true },
+    frictionLevel: 1,
   },
   {
     id: "quiet_008",
@@ -1017,6 +1144,7 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "quiet",
     safetyNote: null,
+    frictionLevel: 0,
   },
   {
     id: "people_008",
@@ -1030,6 +1158,7 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "people",
     safetyNote: null,
+    frictionLevel: 0,
   },
   {
     id: "people_009",
@@ -1043,6 +1172,7 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "people",
     safetyNote: null,
+    frictionLevel: 1,
   },
   {
     id: "home_009",
@@ -1056,6 +1186,8 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "home",
     safetyNote: null,
+    contexts: { places: ["home"] },
+    frictionLevel: 1,
   },
   {
     id: "home_010",
@@ -1069,6 +1201,8 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "home",
     safetyNote: null,
+    contexts: { places: ["home"] },
+    frictionLevel: 1,
   },
   {
     id: "people_010",
@@ -1082,6 +1216,8 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "people",
     safetyNote: null,
+    contexts: { places: ["home"], social: ["with_someone"] },
+    frictionLevel: 1,
   },
   {
     id: "people_011",
@@ -1095,6 +1231,7 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "people",
     safetyNote: null,
+    frictionLevel: 0,
   },
   {
     id: "adventure_009",
@@ -1108,6 +1245,8 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "adventure",
     safetyNote: null,
+    contexts: { requiresOtherPeopleNearby: true },
+    frictionLevel: 2,
   },
   {
     id: "walk_011",
@@ -1122,6 +1261,8 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "walk",
     safetyNote: "暗い道や知らない場所は無理に進まないでください。",
+    contexts: { requiresOutside: true },
+    frictionLevel: 2,
   },
   {
     id: "quiet_010",
@@ -1135,6 +1276,7 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "quiet",
     safetyNote: null,
+    frictionLevel: 1,
   },
   {
     id: "quiet_009",
@@ -1148,6 +1290,7 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "quiet",
     safetyNote: null,
+    frictionLevel: 1,
   },
   {
     id: "people_012",
@@ -1161,6 +1304,8 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "people",
     safetyNote: null,
+    contexts: { requiresOutside: true, requiresTravel: true },
+    frictionLevel: 3,
   },
   {
     id: "people_013",
@@ -1174,5 +1319,6 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "people",
     safetyNote: null,
+    frictionLevel: 2,
   },
 ];

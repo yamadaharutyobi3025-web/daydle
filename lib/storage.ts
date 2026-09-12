@@ -1,5 +1,11 @@
 import { todayKey } from "@/lib/date";
 import type { Mood } from "@/types/mission";
+import type {
+  LocationPermission,
+  PlaceContext,
+  SchedulePressure,
+  SocialContext,
+} from "@/types/context";
 
 export type Reflection = "good" | "normal" | "meh" | "skipped";
 export type TodayStatus = "pending" | "accepted" | "completed" | "declined";
@@ -43,19 +49,49 @@ export interface HistoryEntry {
   hasPhoto?: boolean;
 }
 
+/**
+ * Context Engine: 前回選択した「いまの状況」。次回Welcome画面の初期値にするためだけに使う。
+ * ミッション選択には影響するが、完了メッセージ・写真・記録・共有カードには一切使わない。
+ *
+ * 各項目はnull=「ユーザーがまだ一度も選んでいない」を表す。初回ユーザーは全項目null。
+ * nullのままselectDailyCandidatesへ渡すと、そのcontext軸は制約・優先度づけの
+ * どちらにも使われず、従来通りの「時間×気分」だけのロジックで選ばれる。
+ */
+export interface ContextState {
+  lastPlaceContext: PlaceContext | null;
+  lastSchedulePressure: SchedulePressure | null;
+  lastSocialContext: SocialContext | null;
+  /** 生の緯度経度は永続保存しない。許可状態だけを持つ（今回は基盤のみで未使用）。 */
+  locationPermission: LocationPermission;
+}
+
 export interface DaydleState {
   today: TodayMissionState | null;
   history: HistoryEntry[];
   /** 長時間ミッション解放の通知を、すでに表示した分数（一度きりの表示にするため）。 */
   seenUnlocks: number[];
+  context: ContextState;
 }
 
 const STORAGE_KEY = "daydle_state_v1";
+
+const PLACE_CONTEXTS: PlaceContext[] = ["home", "work_school", "outside", "transit"];
+const SCHEDULE_PRESSURES: SchedulePressure[] = ["soon_busy", "some_time", "free"];
+const SOCIAL_CONTEXTS: SocialContext[] = ["alone", "with_someone"];
+const LOCATION_PERMISSIONS: LocationPermission[] = ["unknown", "granted", "denied"];
+
+const defaultContext: ContextState = {
+  lastPlaceContext: null,
+  lastSchedulePressure: null,
+  lastSocialContext: null,
+  locationPermission: "unknown",
+};
 
 const emptyState: DaydleState = {
   today: null,
   history: [],
   seenUnlocks: [],
+  context: defaultContext,
 };
 
 function isBrowser(): boolean {
@@ -91,6 +127,24 @@ function isValidTodayMissionState(value: unknown): value is TodayMissionState {
     (v.mood === undefined ||
       v.mood === null ||
       (typeof v.mood === "string" && VALID_MOODS.includes(v.mood as Mood)))
+  );
+}
+
+function isValidContextState(value: unknown): value is ContextState {
+  if (!value || typeof value !== "object") return false;
+  const v = value as Record<string, unknown>;
+  return (
+    (v.lastPlaceContext === null ||
+      (typeof v.lastPlaceContext === "string" &&
+        PLACE_CONTEXTS.includes(v.lastPlaceContext as PlaceContext))) &&
+    (v.lastSchedulePressure === null ||
+      (typeof v.lastSchedulePressure === "string" &&
+        SCHEDULE_PRESSURES.includes(v.lastSchedulePressure as SchedulePressure))) &&
+    (v.lastSocialContext === null ||
+      (typeof v.lastSocialContext === "string" &&
+        SOCIAL_CONTEXTS.includes(v.lastSocialContext as SocialContext))) &&
+    typeof v.locationPermission === "string" &&
+    LOCATION_PERMISSIONS.includes(v.locationPermission as LocationPermission)
   );
 }
 
@@ -135,6 +189,7 @@ export function loadState(): DaydleState {
       seenUnlocks: Array.isArray(parsed.seenUnlocks)
         ? parsed.seenUnlocks.filter((n): n is number => typeof n === "number")
         : [],
+      context: isValidContextState(parsed.context) ? parsed.context : defaultContext,
     };
   } catch {
     cachedState = emptyState;
@@ -252,6 +307,18 @@ export function markUnlockSeen(minutes: number): void {
   const state = loadState();
   if (state.seenUnlocks.includes(minutes)) return;
   state.seenUnlocks = [...state.seenUnlocks, minutes];
+  saveState(state);
+}
+
+/** 「いまの状況」の前回選択値。次回Welcome画面の初期値として使う。 */
+export function getContext(): ContextState {
+  return loadState().context;
+}
+
+/** 「いまの状況」の一部だけを更新する（他の項目は前回の値を保つ）。 */
+export function saveContext(patch: Partial<ContextState>): void {
+  const state = loadState();
+  state.context = { ...state.context, ...patch };
   saveState(state);
 }
 

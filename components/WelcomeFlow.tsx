@@ -3,12 +3,16 @@
 import { useEffect, useState } from "react";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/Button";
+import { ContextPicker } from "@/components/ContextPicker";
 import type { Mood } from "@/types/mission";
+import type { PlaceContext, SchedulePressure, SocialContext } from "@/types/context";
 import { selectDailyCandidates } from "@/lib/missionSelector";
 import {
   getCompletedCount,
+  getContext,
   getSeenUnlocks,
   markUnlockSeen,
+  saveContext,
   setTodayMission,
 } from "@/lib/storage";
 import { getPendingUnlockNotice, getUnlockedMinutes } from "@/lib/unlocks";
@@ -33,6 +37,19 @@ export function WelcomeFlow({ onReady }: { onReady: () => void }) {
   const timeOptions = getUnlockedMinutes(completedCount);
   const pendingUnlock = getPendingUnlockNotice(completedCount, getSeenUnlocks());
 
+  // Context Engine: 初回はnull（未設定）のまま扱い、時間×気分だけの従来ロジックで選ぶ。
+  // 2回目以降は、前回ユーザーが実際に選んだ値だけを初期値として引き継ぐ。
+  const savedContext = getContext();
+  const [placeContext, setPlaceContext] = useState<PlaceContext | null>(
+    savedContext.lastPlaceContext
+  );
+  const [schedulePressure, setSchedulePressure] = useState<SchedulePressure | null>(
+    savedContext.lastSchedulePressure
+  );
+  const [socialContext, setSocialContext] = useState<SocialContext | null>(
+    savedContext.lastSocialContext
+  );
+
   useEffect(() => {
     if (pendingUnlock) markUnlockSeen(pendingUnlock.minutes);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -40,8 +57,24 @@ export function WelcomeFlow({ onReady }: { onReady: () => void }) {
 
   function handleSubmit() {
     if (minutes === null || mood === null) return;
-    const candidates = selectDailyCandidates({ minutes, moods: [mood] });
+    const candidates = selectDailyCandidates({
+      minutes,
+      moods: [mood],
+      placeContext,
+      schedulePressure,
+      socialContext,
+    });
     if (candidates.length === 0) return;
+
+    // ユーザーが一度も「いまの状況」に触れていない場合は何も保存しない
+    // （nullのままにして、次回も従来ロジックのままにする）。
+    if (placeContext !== null || schedulePressure !== null || socialContext !== null) {
+      saveContext({
+        lastPlaceContext: placeContext,
+        lastSchedulePressure: schedulePressure,
+        lastSocialContext: socialContext,
+      });
+    }
 
     setTodayMission({
       date: todayKey(),
@@ -129,6 +162,15 @@ export function WelcomeFlow({ onReady }: { onReady: () => void }) {
           ))}
         </div>
       </section>
+
+      <ContextPicker
+        placeContext={placeContext}
+        schedulePressure={schedulePressure}
+        socialContext={socialContext}
+        onChangePlace={setPlaceContext}
+        onChangeSchedule={setSchedulePressure}
+        onChangeSocial={setSocialContext}
+      />
 
       <div className="mt-auto pt-12">
         <Button

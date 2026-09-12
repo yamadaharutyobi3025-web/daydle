@@ -4,6 +4,8 @@
  * 新しいミッションを増やせるようにしている。
  */
 
+import type { PlaceContext, SchedulePressure, SocialContext } from "@/types/context";
+
 export type PhoneMode = "offline" | "tool" | "connect";
 
 export type Environment = "outside" | "inside" | "either";
@@ -50,6 +52,25 @@ export type CompletionCategory =
   | "nature"
   | "food";
 
+/**
+ * Context Engine: 「実行可能性」判定のための任意条件。
+ * 明確に判断できるミッションにだけ設定し、未指定の項目は制約なし（どの状況でも許可）として扱う。
+ */
+export interface MissionContexts {
+  /** 指定した場所のときだけ候補にする（例: 家にある物を使うミッション）。 */
+  places?: PlaceContext[];
+  /** 指定した状況のときだけ候補にする（例: 「一緒にいる人と」を前提とするミッション）。 */
+  social?: SocialContext[];
+  /** 指定したスケジュール状況のときだけ候補にする。 */
+  schedulePressure?: SchedulePressure[];
+  /** 屋外にいる（外出中・移動中）ことが前提。家・職場学校では原則候補から除外する。 */
+  requiresOutside?: boolean;
+  /** 店員・通行人など、近くにいる他人に話しかけることが前提。家では候補から除外する。 */
+  requiresOtherPeopleNearby?: boolean;
+  /** 電車・バスなどでの移動が前提。 */
+  requiresTravel?: boolean;
+}
+
 export interface Mission {
   id: string;
   title: string;
@@ -66,6 +87,13 @@ export interface Mission {
   safetyNote?: string | null;
   /** categoryからの自動変換では体感がずれる場合だけ指定する。 */
   completionCategory?: CompletionCategory | null;
+  /** Context Engine用。未指定の場合は制約なし（どの状況でも候補になりうる）。 */
+  contexts?: MissionContexts;
+  /**
+   * 0=その場ですぐできる / 1=少し動く / 2=少し準備・移動が必要 / 3=明確な行動変更が必要。
+   * ユーザーには一切見せない内部指標。未指定は1（少し動く）相当として扱う。
+   */
+  frictionLevel?: 0 | 1 | 2 | 3;
 }
 
 export interface CommunityMission {
