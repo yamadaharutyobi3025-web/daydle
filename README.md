@@ -27,7 +27,7 @@ DAYDLEが渡すのは目標や成果ではなく、「今日、ちょっと面�
 - データ保存は **localStorage**（MVPではサーバーもDBも使いません）
 - ホスティングは **Vercel** を想定
 
-外部サービスやAPIキーは一切不要です。`npm install` して `npm run dev` すれば、誰の環境でもそのまま動きます。
+外部サービスやAPIキーは一切不要です。`npm install` して `npm run dev` すれば、誰の環境でもそのまま動きます（`feature/social-v1` ブランチのSocial機能はオプトインで、設定しなくても本体は動きます。詳細は「12. Social v1」参照）。
 
 ---
 
@@ -276,16 +276,12 @@ export function trackEvent(name: TrackEventName, props?: Record<string, unknown>
 }
 ```
 
-### Supabase（ログイン・本物のユーザー投稿）を追加する場合
+### Supabase（ログイン・フォロー・投稿）について
 
-現在 `lib/storage.ts` が担っている「読み書き」の役割を、Supabaseへの問い合わせに置き換えるイメージです。
-
-1. Supabaseプロジェクトを作成し、`missions` テーブル・`user_history` テーブルなどを用意する
-2. `data/missions.ts` の静的配列を、Supabaseから取得したデータに置き換える（`fetch` またはSupabase JS SDK）
-3. `lib/storage.ts` の各関数（`getTodayMission` など）を、localStorageではなくSupabase呼び出しに置き換える
-4. ログイン機能を追加する場合は、Supabase Authを導入し、ユーザーごとに履歴を紐づける
-
-型定義（`types/mission.ts`）はそのまま使えるので、画面側（`app/`・`components/`）の変更は最小限で済むように設計しています。
+`feature/social-v1` ブランチで実装中です。詳しくは次節「12. Social v1」と
+`docs/social-v1-design.md` を参照してください。ミッション本体
+（`data/missions.ts` / `lib/storage.ts`）は置き換えず、その上に完全オプトインの
+ソーシャル機能を追加する設計です。
 
 ### AIによるミッション生成・パーソナライズを追加する場合
 
@@ -296,3 +292,19 @@ export function trackEvent(name: TrackEventName, props?: Record<string, unknown>
 ## 11. ライセンス・注意事項
 
 DAYDLEのミッションは、交通ルール違反・危険な場所への立ち入り・高額な支出などにつながらないよう配慮して作成しています。ミッションを追加する際も、この安全性の方針を踏襲してください。
+
+---
+
+## 12. Social v1（ログイン・フォロー・投稿、完全オプトイン）を試す
+
+`feature/social-v1` ブランチのみ。**設定しなくてもDAYDLE本体（今日/みんな/記録など）は今まで通り動きます。**未設定の間は `/login` にアクセスしても「Social機能はまだ準備中です」と表示されるだけです。
+
+現時点（段階1: Auth基盤）で試せるのは、ログイン（メールのマジックリンク）とアカウント画面だけです。プロフィール編集・フォロー・投稿はまだ実装していません。設計全体は `docs/social-v1-design.md` を参照してください。
+
+1. [supabase.com](https://supabase.com) でプロジェクトを作成する
+2. Supabaseダッシュボード → SQL Editor で `supabase/migrations/0001_auth_foundation.sql` の中身を実行する
+3. Project Settings → API から `Project URL` と `anon public` キーを確認する
+4. このフォルダに `.env.local` を作り、`.env.local.example` を参考に値を埋める
+5. `npm run dev` を再起動し、`/login` からメールアドレスでログインを試す
+
+`.env.local` はGit管理しません（`.gitignore`で除外済み）。
