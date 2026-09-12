@@ -48,7 +48,14 @@ export default function ShareCardPage() {
         return;
       }
       try {
-        const photoBlob = entry.hasPhoto ? await getPhoto(date).catch(() => null) : null;
+        let photoBlob: Blob | null = null;
+        if (entry.hasPhoto) {
+          try {
+            photoBlob = await getPhoto(date);
+          } catch (err) {
+            console.error("Failed to load photo for share card:", err);
+          }
+        }
         const blob = await generateShareCard({
           missionDescription: mission.description,
           photoBlob,

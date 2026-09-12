@@ -87,18 +87,41 @@ function wrapText(
 
 function drawCoverImage(
   ctx: CanvasRenderingContext2D,
-  bitmap: ImageBitmap,
+  image: HTMLImageElement,
   x: number,
   y: number,
   w: number,
   h: number
 ) {
-  const scale = Math.max(w / bitmap.width, h / bitmap.height);
+  const iw = image.naturalWidth;
+  const ih = image.naturalHeight;
+  const scale = Math.max(w / iw, h / ih);
   const sw = w / scale;
   const sh = h / scale;
-  const sx = (bitmap.width - sw) / 2;
-  const sy = (bitmap.height - sh) / 2;
-  ctx.drawImage(bitmap, sx, sy, sw, sh, x, y, w, h);
+  const sx = (iw - sw) / 2;
+  const sy = (ih - sh) / 2;
+  ctx.drawImage(image, sx, sy, sw, sh, x, y, w, h);
+}
+
+/**
+ * BlobをHTMLImageElementとして読み込む。
+ * createImageBitmapより互換性が高く、iOS Safariでも安定して動作するため採用。
+ * デコード完了（onload）を待ってからobjectURLを解放する。
+ */
+function loadImage(blob: Blob): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve(img);
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Failed to decode photo"));
+    };
+    img.src = url;
+  });
 }
 
 /** 写真がない場合に、ヒーロー領域へ描く控えめな曲線モチーフ。 */
@@ -144,15 +167,18 @@ export async function generateShareCard(input: ShareCardInput): Promise<Blob> {
   // ヒーロー領域：写真、なければ曲線モチーフ
   const heroY = 220;
   const heroH = 1040;
-  roundedRectPath(ctx, MARGIN_X, heroY, contentW, heroH, 40);
 
-  const bitmap = input.photoBlob ? await createImageBitmap(input.photoBlob) : null;
-  if (bitmap) {
+  // 写真のデコード完了を待ってから描画する（先に読み込みを済ませ、失敗時は写真なし扱いにフォールバック）
+  const photoImage = input.photoBlob
+    ? await loadImage(input.photoBlob).catch(() => null)
+    : null;
+
+  roundedRectPath(ctx, MARGIN_X, heroY, contentW, heroH, 40);
+  if (photoImage) {
     ctx.save();
     ctx.clip();
-    drawCoverImage(ctx, bitmap, MARGIN_X, heroY, contentW, heroH);
+    drawCoverImage(ctx, photoImage, MARGIN_X, heroY, contentW, heroH);
     ctx.restore();
-    bitmap.close();
   } else {
     ctx.fillStyle = COLORS.creamDeep;
     ctx.fill();
