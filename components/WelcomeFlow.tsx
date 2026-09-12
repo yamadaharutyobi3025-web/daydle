@@ -37,6 +37,7 @@ export function WelcomeFlow({ onReady }: { onReady: () => void }) {
       currentIndex: 0,
       rerollCount: 0,
       status: "pending",
+      mood,
     });
     trackEvent("mission_viewed", { missionId: candidates[0].id, minutes, mood });
     onReady();

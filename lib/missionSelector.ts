@@ -36,14 +36,38 @@ function matchesMood(mission: Mission, moods: Mood[]): boolean {
 
 /**
  * 選択された時間・気分にもとづいて、今日の候補ミッション（最大3件）を選ぶ。
- * 完全に条件を満たす候補がなければ、条件を少しずつ緩めていく。
+ *
+ * data/missions.ts は「時間(5/15/30/60) × 気分(6種)」の24パターン全てに
+ * 最低3件ずつ完全一致するミッションを持つように維持されている。
+ * そのため通常利用では、最初の「時間完全一致 + 気分完全一致」の時点で
+ * 必ず候補が見つかり、以降のフォールバックには到達しない。
+ * フォールバックは、将来ミッションを削除・変更した際に0件で
+ * 詰まらないようにするための保険として残している。
  */
 export function selectDailyCandidates(input: SelectionInput): Mission[] {
   const recentIds = new Set(getRecentMissionIds());
   const notRecent = (m: Mission) => !recentIds.has(m.id);
-  const byDuration = (m: Mission) => m.duration <= input.minutes;
+  const exactDuration = (m: Mission) => m.duration === input.minutes;
+  const exactMatch = (m: Mission) =>
+    exactDuration(m) && matchesMood(m, input.moods) && matchesEnvironment(m, input.moods);
 
-  const attempts: Array<(m: Mission) => boolean> = [
+  // 主経路：時間完全一致 + 気分完全一致（直近で出たものは避ける→避けない、の2段）。
+  const primaryAttempts: Array<(m: Mission) => boolean> = [
+    (m) => exactMatch(m) && notRecent(m),
+    (m) => exactMatch(m),
+  ];
+
+  for (const filter of primaryAttempts) {
+    const pool = missions.filter(filter);
+    if (pool.length > 0) {
+      return shuffle(pool).slice(0, 3);
+    }
+  }
+
+  // 保険：本来は到達しない。今後ミッションを削除・変更して
+  // 24パターンのいずれかが0件になった場合だけの安全弁。
+  const byDuration = (m: Mission) => m.duration <= input.minutes;
+  const fallbackAttempts: Array<(m: Mission) => boolean> = [
     (m) => byDuration(m) && matchesMood(m, input.moods) && matchesEnvironment(m, input.moods) && notRecent(m),
     (m) => byDuration(m) && matchesMood(m, input.moods) && matchesEnvironment(m, input.moods),
     (m) => byDuration(m) && matchesEnvironment(m, input.moods),
@@ -51,7 +75,7 @@ export function selectDailyCandidates(input: SelectionInput): Mission[] {
     () => true,
   ];
 
-  for (const filter of attempts) {
+  for (const filter of fallbackAttempts) {
     const pool = missions.filter(filter);
     if (pool.length > 0) {
       return shuffle(pool).slice(0, 3);

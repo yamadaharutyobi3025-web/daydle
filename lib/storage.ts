@@ -1,4 +1,5 @@
 import { todayKey } from "@/lib/date";
+import type { Mood } from "@/types/mission";
 
 export type Reflection = "good" | "normal" | "meh" | "skipped";
 export type TodayStatus = "pending" | "accepted" | "completed" | "declined";
@@ -22,7 +23,11 @@ export interface TodayMissionState {
   status: TodayStatus;
   /** タイマーは補助機能。未使用なら存在しない／nullのまま。 */
   timer?: MissionTimer | null;
+  /** Welcome画面で選んだ気分。完了メッセージの出し分けに使う（「みんな」経由の場合はnull）。 */
+  mood?: Mood | null;
 }
+
+const VALID_MOODS: Mood[] = ["quiet", "adventure", "outside", "home", "people", "empty"];
 
 /** 「ひとこと」の文字数上限。 */
 export const NOTE_MAX_LENGTH = 150;
@@ -79,7 +84,10 @@ function isValidTodayMissionState(value: unknown): value is TodayMissionState {
       v.status === "accepted" ||
       v.status === "completed" ||
       v.status === "declined") &&
-    (v.timer === undefined || v.timer === null || isValidMissionTimer(v.timer))
+    (v.timer === undefined || v.timer === null || isValidMissionTimer(v.timer)) &&
+    (v.mood === undefined ||
+      v.mood === null ||
+      (typeof v.mood === "string" && VALID_MOODS.includes(v.mood as Mood)))
   );
 }
 

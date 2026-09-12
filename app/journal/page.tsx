@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/Button";
+import { CameraCapture } from "@/components/CameraCapture";
 import {
   getTodayMission,
   setJournalEntry,
@@ -24,6 +25,7 @@ export default function JournalPage() {
   const [note, setNote] = useState("");
   const [isProcessingPhoto, setIsProcessingPhoto] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
 
   useEffect(() => {
     return () => {
@@ -39,13 +41,10 @@ export default function JournalPage() {
 
   if (today === UNLOADED || !today) return null;
 
-  async function handlePickPhoto(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file) return;
+  async function handlePickedBlob(raw: Blob) {
     setIsProcessingPhoto(true);
     try {
-      const compressed = await compressImage(file);
+      const compressed = await compressImage(raw);
       setPreviewUrl((old) => {
         if (old) URL.revokeObjectURL(old);
         return URL.createObjectURL(compressed);
@@ -54,6 +53,18 @@ export default function JournalPage() {
     } finally {
       setIsProcessingPhoto(false);
     }
+  }
+
+  function handlePickPhoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    void handlePickedBlob(file);
+  }
+
+  function handleCapturedPhoto(blob: Blob) {
+    setShowCamera(false);
+    void handlePickedBlob(blob);
   }
 
   function handleRemovePhoto() {
@@ -80,6 +91,12 @@ export default function JournalPage() {
     } finally {
       router.push("/complete");
     }
+  }
+
+  if (showCamera) {
+    return (
+      <CameraCapture onCapture={handleCapturedPhoto} onCancel={() => setShowCamera(false)} />
+    );
   }
 
   return (
@@ -114,15 +131,26 @@ export default function JournalPage() {
             </button>
           </div>
         ) : (
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isProcessingPhoto}
-            className="w-full"
-          >
-            {isProcessingPhoto ? "処理中…" : "写真を残す"}
-          </Button>
+          <div className="flex w-full flex-col gap-3">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setShowCamera(true)}
+              disabled={isProcessingPhoto}
+              className="w-full"
+            >
+              {isProcessingPhoto ? "処理中…" : "写真を撮る"}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isProcessingPhoto}
+              className="w-full"
+            >
+              ライブラリから選ぶ
+            </Button>
+          </div>
         )}
         <input
           ref={fileInputRef}

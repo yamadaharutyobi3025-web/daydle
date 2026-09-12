@@ -9,11 +9,13 @@ import { findMissionById } from "@/lib/missionSelector";
 import {
   clearTodayMission,
   recordTodayHistory,
+  startMissionTimer,
   updateTodayMission,
   type TodayMissionState,
 } from "@/lib/storage";
 import { formatJapaneseDate } from "@/lib/date";
 import { trackEvent } from "@/lib/track";
+import { primeAudio } from "@/lib/timerAlert";
 
 export function TodayScreen({
   initial,
@@ -45,6 +47,8 @@ export function TodayScreen({
   }
 
   function handleAccept() {
+    if (!mission) return;
+    primeAudio();
     updateTodayMission((c) => ({ ...c, status: "accepted" }));
     recordTodayHistory({
       date: state.date,
@@ -52,8 +56,9 @@ export function TodayScreen({
       status: "accepted",
       reflection: null,
     });
+    startMissionTimer(mission.duration);
     trackEvent("mission_accepted", { missionId: state.missionId });
-    router.push("/start");
+    router.push("/timer");
   }
 
   function handleComplete() {
@@ -142,15 +147,9 @@ export function TodayScreen({
               できた
             </Button>
             <div className="mt-1 flex items-center justify-center gap-4 text-xs text-ink-soft/60">
-              {state.timer ? (
-                <Link href="/timer" className="touch-manipulation -mx-2 -my-3 px-2 py-3">
-                  タイマーを見る
-                </Link>
-              ) : (
-                <Link href="/start" className="touch-manipulation -mx-2 -my-3 px-2 py-3">
-                  もう一度確認する
-                </Link>
-              )}
+              <Link href="/timer" className="touch-manipulation -mx-2 -my-3 px-2 py-3">
+                タイマーを見る
+              </Link>
               <span className="pointer-events-none text-line">・</span>
               <Link href="/card" className="touch-manipulation -mx-2 -my-3 px-2 py-3">
                 カードで見る
