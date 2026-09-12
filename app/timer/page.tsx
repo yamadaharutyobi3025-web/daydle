@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Logo } from "@/components/Logo";
@@ -10,58 +11,44 @@ import { findMissionById } from "@/lib/missionSelector";
 import {
   getTodayMission,
   recordTodayHistory,
-  startMissionTimer,
   updateTodayMission,
   type TodayMissionState,
 } from "@/lib/storage";
 import { useClientSnapshot, UNLOADED } from "@/lib/useClientSnapshot";
+import { formatCountdown } from "@/lib/date";
 import { trackEvent } from "@/lib/track";
-import type { PhoneMode } from "@/types/mission";
 
-const copy: Record<PhoneMode, { main: string; sub: string }> = {
-  offline: {
-    main: "では、\nスマホを閉じてください。",
-    sub: "今日の遠回りは、現実の中にあります。",
-  },
-  tool: {
-    main: "必要なときだけ、\nスマホを使ってください。",
-    sub: "用事が終わったら、またポケットへ。",
-  },
-  connect: {
-    main: "連絡をしたら、\nこのアプリに戻らなくても大丈夫です。",
-    sub: "",
-  },
-};
-
-export default function StartPage() {
+export default function TimerPage() {
   const router = useRouter();
   const today = useClientSnapshot<TodayMissionState | null>(() => getTodayMission());
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
 
   if (today === UNLOADED) return null;
 
   const mission = today ? findMissionById(today.missionId) : undefined;
+  const timer = today?.timer;
 
-  if (!mission || !today) {
+  if (!today || !mission || !timer) {
     return (
       <main className="flex min-h-[100dvh] flex-col items-center justify-center gap-6 px-6 text-center">
-        <p className="text-sm text-ink-soft">今日の遠回りが見つかりませんでした。</p>
+        <p className="text-sm text-ink-soft">タイマーはまだ始まっていません。</p>
         <Link
-          href="/"
+          href="/start"
           className="touch-manipulation -mx-3 -my-3 px-3 py-3 text-sm underline underline-offset-4 text-ink-soft"
         >
-          今日の遠回りを見る
+          ミッション開始画面に戻る
         </Link>
       </main>
     );
   }
 
-  const text = copy[mission.phoneMode];
-
-  function handleStartTimer() {
-    if (!mission) return;
-    startMissionTimer(mission.duration);
-    router.push("/timer");
-  }
+  const remainingMs = timer.endsAt - now;
+  const isDone = remainingMs <= 0;
 
   function handleComplete() {
     if (!today || today === UNLOADED) return;
@@ -80,36 +67,27 @@ export default function StartPage() {
     <main className="mx-auto flex min-h-[100dvh] w-full max-w-sm flex-col items-center justify-center px-8 text-center">
       <div className="animate-fade-in flex flex-col items-center">
         <Logo size="sm" muted />
-        <p className="mt-14 whitespace-pre-line font-serif-jp text-[24px] leading-[1.9] text-ink">
-          {text.main}
+        <p className="mt-14 font-serif-jp text-[52px] tabular-nums leading-none text-ink">
+          {formatCountdown(remainingMs)}
         </p>
-        {text.sub && (
-          <p className="mt-6 text-[13px] leading-loose text-ink-soft">{text.sub}</p>
-        )}
+        <p className="mt-8 text-[13px] leading-loose text-ink-soft">
+          {isDone ? (
+            "そろそろ、戻ってきても大丈夫です。"
+          ) : (
+            <>
+              スマホを閉じて、
+              <br />
+              今日の遠回りへ。
+            </>
+          )}
+        </p>
         <CurvedPath className="mt-12 h-7 w-36 text-sage/80" />
         <PosterSignature className="mt-6" />
       </div>
 
-      {today.status !== "completed" && (
-        <div className="mt-16 flex w-full flex-col gap-3">
-          {mission.duration > 0 &&
-            (today.timer ? (
-              <Link
-                href="/timer"
-                className="touch-manipulation -my-2 py-2 text-center text-sm text-ink-soft/80"
-              >
-                タイマーを見る
-              </Link>
-            ) : (
-              <Button variant="ghost" onClick={handleStartTimer} className="w-full">
-                {mission.duration}分タイマーをはじめる
-              </Button>
-            ))}
-          <Button onClick={handleComplete} className="w-full">
-            できた
-          </Button>
-        </div>
-      )}
+      <Button onClick={handleComplete} className="mt-16 w-full">
+        できた
+      </Button>
 
       <Link
         href="/"

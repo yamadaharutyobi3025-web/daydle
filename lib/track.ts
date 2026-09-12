@@ -6,6 +6,7 @@
 export type TrackEventName =
   | "mission_viewed"
   | "mission_accepted"
+  | "mission_completed"
   | "mission_skipped"
   | "mission_rerolled"
   | "community_viewed"

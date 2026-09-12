@@ -56,6 +56,18 @@ export function TodayScreen({
     router.push("/start");
   }
 
+  function handleComplete() {
+    updateTodayMission((c) => ({ ...c, status: "completed" }));
+    recordTodayHistory({
+      date: state.date,
+      missionId: state.missionId,
+      status: "completed",
+      reflection: null,
+    });
+    trackEvent("mission_completed", { missionId: state.missionId });
+    router.push("/journal");
+  }
+
   function handleDecline() {
     const next = updateTodayMission((c) => ({ ...c, status: "declined" }));
     recordTodayHistory({
@@ -126,9 +138,35 @@ export function TodayScreen({
             <p className="text-center text-sm leading-loose text-ink-soft">
               今日はこの遠回りへ向かっています。
             </p>
+            <Button onClick={handleComplete} className="mt-2 w-full">
+              できた
+            </Button>
             <div className="mt-1 flex items-center justify-center gap-4 text-xs text-ink-soft/60">
-              <Link href="/start" className="touch-manipulation -mx-2 -my-3 px-2 py-3">
-                もう一度確認する
+              {state.timer ? (
+                <Link href="/timer" className="touch-manipulation -mx-2 -my-3 px-2 py-3">
+                  タイマーを見る
+                </Link>
+              ) : (
+                <Link href="/start" className="touch-manipulation -mx-2 -my-3 px-2 py-3">
+                  もう一度確認する
+                </Link>
+              )}
+              <span className="pointer-events-none text-line">・</span>
+              <Link href="/card" className="touch-manipulation -mx-2 -my-3 px-2 py-3">
+                カードで見る
+              </Link>
+            </div>
+          </>
+        )}
+
+        {state.status === "completed" && (
+          <>
+            <p className="text-center text-sm leading-loose text-ink-soft">
+              今日の遠回りは、もう終えています。
+            </p>
+            <div className="mt-1 flex items-center justify-center gap-4 text-xs text-ink-soft/60">
+              <Link href="/record" className="touch-manipulation -mx-2 -my-3 px-2 py-3">
+                記録を見る
               </Link>
               <span className="pointer-events-none text-line">・</span>
               <Link href="/card" className="touch-manipulation -mx-2 -my-3 px-2 py-3">

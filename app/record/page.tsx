@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Logo } from "@/components/Logo";
 import { CurvedPath } from "@/components/CurvedPath";
+import { RecordPhoto } from "@/components/RecordPhoto";
 import { findMissionById } from "@/lib/missionSelector";
 import {
   getHistory,
@@ -39,7 +40,10 @@ export default function RecordPage() {
 
   const yKey = yesterdayKey();
   const pending = history.find(
-    (h) => h.date === yKey && h.status === "accepted" && h.reflection === null
+    (h) =>
+      h.date === yKey &&
+      (h.status === "accepted" || h.status === "completed") &&
+      h.reflection === null
   );
 
   function handleAnswer(reflection: Reflection) {
@@ -99,6 +103,12 @@ export default function RecordPage() {
                   <span className="text-xs text-ink-soft">
                     {formatJapaneseDate(entry.date)}
                   </span>
+                  {entry.status === "completed" && (
+                    <>
+                      <span className="pointer-events-none text-line">・</span>
+                      <span className="text-[11px] text-sage-deep">できた</span>
+                    </>
+                  )}
                   {entry.reflection && (
                     <>
                       <span className="pointer-events-none text-line">・</span>
@@ -111,6 +121,14 @@ export default function RecordPage() {
                 <p className="mt-4 font-serif-jp text-[16px] leading-[1.95] text-ink">
                   {mission?.description ?? "（削除されたミッション）"}
                 </p>
+                {entry.note && (
+                  <p className="mt-3 text-[13px] leading-relaxed text-ink-soft">
+                    ― {entry.note}
+                  </p>
+                )}
+                {entry.hasPhoto && (
+                  <RecordPhoto date={entry.date} onDeleted={() => setTick((t) => t + 1)} />
+                )}
               </li>
             );
           })}

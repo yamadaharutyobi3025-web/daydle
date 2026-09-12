@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import { BottomNav } from "@/components/BottomNav";
 
-const immersive = ["/start", "/card"];
+const immersive = ["/start", "/card", "/complete", "/timer", "/journal"];
 
 export function AppChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();

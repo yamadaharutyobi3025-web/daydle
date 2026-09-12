@@ -1,7 +1,15 @@
 import { todayKey } from "@/lib/date";
 
 export type Reflection = "good" | "normal" | "meh" | "skipped";
-export type TodayStatus = "pending" | "accepted" | "declined";
+export type TodayStatus = "pending" | "accepted" | "completed" | "declined";
+
+/** 簡易タイマー。開始・終了を「絶対時刻」で持つことで、
+ * ブラウザを閉じて再度開いたときも残り時間を計算し直せるようにする。 */
+export interface MissionTimer {
+  startedAt: number;
+  endsAt: number;
+  durationMinutes: number;
+}
 
 export interface TodayMissionState {
   date: string;
@@ -12,13 +20,22 @@ export interface TodayMissionState {
   currentIndex: number;
   rerollCount: number;
   status: TodayStatus;
+  /** タイマーは補助機能。未使用なら存在しない／nullのまま。 */
+  timer?: MissionTimer | null;
 }
+
+/** 「ひとこと」の文字数上限。 */
+export const NOTE_MAX_LENGTH = 150;
 
 export interface HistoryEntry {
   date: string;
   missionId: string;
-  status: "accepted" | "declined";
+  status: "accepted" | "completed" | "declined";
   reflection: Reflection | null;
+  /** 任意のひとこと。写真と同じく、できた後に残せる小さな記録。 */
+  note?: string | null;
+  /** IndexedDBに写真がある場合true（画像本体はここには持たない）。 */
+  hasPhoto?: boolean;
 }
 
 export interface DaydleState {
@@ -37,6 +54,16 @@ function isBrowser(): boolean {
   return typeof window !== "undefined";
 }
 
+function isValidMissionTimer(value: unknown): value is MissionTimer {
+  if (!value || typeof value !== "object") return false;
+  const v = value as Record<string, unknown>;
+  return (
+    typeof v.startedAt === "number" &&
+    typeof v.endsAt === "number" &&
+    typeof v.durationMinutes === "number"
+  );
+}
+
 /** 壊れた・古い形式のデータを弾き、安全にWelcome画面へフォールバックできるようにする。 */
 function isValidTodayMissionState(value: unknown): value is TodayMissionState {
   if (!value || typeof value !== "object") return false;
@@ -48,7 +75,11 @@ function isValidTodayMissionState(value: unknown): value is TodayMissionState {
     v.candidateIds.every((id) => typeof id === "string") &&
     typeof v.currentIndex === "number" &&
     typeof v.rerollCount === "number" &&
-    (v.status === "pending" || v.status === "accepted" || v.status === "declined")
+    (v.status === "pending" ||
+      v.status === "accepted" ||
+      v.status === "completed" ||
+      v.status === "declined") &&
+    (v.timer === undefined || v.timer === null || isValidMissionTimer(v.timer))
   );
 }
 
@@ -58,12 +89,14 @@ function isValidHistoryEntry(value: unknown): value is HistoryEntry {
   return (
     typeof v.date === "string" &&
     typeof v.missionId === "string" &&
-    (v.status === "accepted" || v.status === "declined") &&
+    (v.status === "accepted" || v.status === "completed" || v.status === "declined") &&
     (v.reflection === null ||
       v.reflection === "good" ||
       v.reflection === "normal" ||
       v.reflection === "meh" ||
-      v.reflection === "skipped")
+      v.reflection === "skipped") &&
+    (v.note === undefined || v.note === null || typeof v.note === "string") &&
+    (v.hasPhoto === undefined || typeof v.hasPhoto === "boolean")
   );
 }
 
@@ -137,6 +170,16 @@ export function updateTodayMission(
   return next;
 }
 
+/** 今日のミッションに、開始時刻／終了予定時刻を持つ簡易タイマーを設定する。 */
+export function startMissionTimer(durationMinutes: number): TodayMissionState | null {
+  const startedAt = Date.now();
+  const endsAt = startedAt + durationMinutes * 60_000;
+  return updateTodayMission((c) => ({
+    ...c,
+    timer: { startedAt, endsAt, durationMinutes },
+  }));
+}
+
 /** 今日の記録を履歴へ反映する（同じ日付があれば上書き）。 */
 export function recordTodayHistory(entry: HistoryEntry): void {
   const state = loadState();
@@ -152,6 +195,18 @@ export function setReflection(date: string, reflection: Reflection): void {
   const idx = state.history.findIndex((h) => h.date === date);
   if (idx === -1) return;
   state.history[idx] = { ...state.history[idx], reflection };
+  saveState(state);
+}
+
+/** できた後の「ひとこと」「写真の有無」を、その日の記録へ追記する。 */
+export function setJournalEntry(
+  date: string,
+  patch: { note?: string | null; hasPhoto?: boolean }
+): void {
+  const state = loadState();
+  const idx = state.history.findIndex((h) => h.date === date);
+  if (idx === -1) return;
+  state.history[idx] = { ...state.history[idx], ...patch };
   saveState(state);
 }
 
