@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Logo } from "@/components/Logo";
+import { Button } from "@/components/Button";
 import { LogoutButton } from "@/components/LogoutButton";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
@@ -21,7 +22,7 @@ export default async function AccountPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("username, is_private")
+    .select("username, display_name, avatar_url, bio, is_private")
     .eq("id", user.id)
     .single();
 
@@ -32,17 +33,39 @@ export default async function AccountPage() {
         アカウント
       </h1>
 
-      <div className="mt-10 flex flex-col gap-2 text-sm text-ink-soft">
-        <p>{user.email}</p>
-        {profile && (
-          <p>
-            @{profile.username}（{profile.is_private ? "非公開" : "公開"}）
+      <div className="mt-10 flex items-center gap-4">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={profile?.avatar_url || "/icon-192"}
+          alt=""
+          className="h-16 w-16 rounded-full object-cover bg-cream-deep/60"
+        />
+        <div className="flex flex-col gap-0.5 text-sm">
+          <p className="text-ink">{profile?.display_name || "（表示名未設定）"}</p>
+          <p className="text-ink-soft">
+            @{profile?.username}（{profile?.is_private ? "非公開" : "公開"}）
           </p>
-        )}
+        </div>
+      </div>
+
+      {profile?.bio && (
+        <p className="mt-4 whitespace-pre-wrap text-sm leading-relaxed text-ink-soft">
+          {profile.bio}
+        </p>
+      )}
+
+      <p className="mt-4 text-xs text-ink-soft/70">{user.email}</p>
+
+      <div className="mt-6">
+        <Link href="/account/edit">
+          <Button variant="ghost" className="w-full">
+            プロフィールを編集
+          </Button>
+        </Link>
       </div>
 
       <p className="mt-6 text-xs leading-loose text-ink-soft/70">
-        プロフィール編集・投稿・フォローはこの後の段階で追加予定です。
+        フォロー・投稿はこの後の段階で追加予定です。
       </p>
 
       <div className="mt-auto flex flex-col gap-3 pt-12">
