@@ -10,6 +10,19 @@ const USERNAME_PATTERN = /^[a-zA-Z0-9_-]{3,20}$/;
 const DISPLAY_NAME_MAX = 30;
 const BIO_MAX = 160;
 
+/**
+ * StorageUnknownError（fetch自体が失敗した。RLS/権限とは無関係）と
+ * StorageApiError（サーバーがエラーを返した）を区別し、前者は
+ * 「通信エラー」として分かりやすく表示する。詳細は必ずconsoleにも出す。
+ * （@supabase/storage-jsは間接依存のため、型は構造的に受け取る）
+ */
+function describeStorageError(error: { name: string; message: string }): string {
+  if (error.name === "StorageUnknownError") {
+    return `画像のアップロードに失敗しました（通信エラー: ${error.message}）。電波状況を確認してもう一度お試しください。`;
+  }
+  return `画像のアップロードに失敗しました: ${error.message}`;
+}
+
 type Profile = {
   username: string;
   display_name: string | null;
@@ -91,6 +104,9 @@ export function ProfileEditForm({
       const avatarPath = `${userId}/avatar.jpg`;
       let nextAvatarUrl = avatarUrl;
 
+      // 新しい画像を選んだ場合だけアップロードする。公開設定など、
+      // 画像と無関係な項目だけを変更した保存では、この分岐に入らない
+      // （＝ネットワーク越しの画像アップロードは行わない）。
       if (avatarFile) {
         const { error: uploadError } = await supabase.storage
           .from("avatars")
@@ -99,11 +115,20 @@ export function ProfileEditForm({
             contentType: "image/jpeg",
           });
         if (uploadError) {
-          setErrorMessage(`画像のアップロードに失敗しました: ${uploadError.message}`);
+          console.error("avatar upload failed", uploadError.name, uploadError);
+          setErrorMessage(describeStorageError(uploadError));
           return;
         }
+        // アップロード済みのファイルを、保存に失敗した場合の再送信で
+        // もう一度アップロードしてしまわないよう、ここで確定させる。
+        setAvatarFile(null);
+        setAvatarPreviewUrl((old) => {
+          if (old) URL.revokeObjectURL(old);
+          return null;
+        });
         const { data } = supabase.storage.from("avatars").getPublicUrl(avatarPath);
         nextAvatarUrl = `${data.publicUrl}?v=${Date.now()}`;
+        setAvatarUrl(nextAvatarUrl);
       } else if (avatarUrl === null && initialProfile.avatar_url) {
         // 明示的に削除された場合のみ、保存済みファイルの削除を試みる
         // （失敗しても致命的ではないので結果は無視する）。
@@ -122,6 +147,7 @@ export function ProfileEditForm({
         .eq("id", userId);
 
       if (updateError) {
+        console.error("profile update failed", updateError.code, updateError);
         if (updateError.code === "23505") {
           setUsernameError("このusernameは既に使われています。");
         } else {
@@ -132,6 +158,9 @@ export function ProfileEditForm({
 
       router.push("/account");
       router.refresh();
+    } catch (err) {
+      console.error("profile save failed", err);
+      setErrorMessage(err instanceof Error ? err.message : "保存に失敗しました。");
     } finally {
       setIsSaving(false);
     }
