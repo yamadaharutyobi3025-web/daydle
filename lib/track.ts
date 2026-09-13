@@ -11,6 +11,7 @@ export type TrackEventName =
   | "mission_rerolled"
   | "community_viewed"
   | "community_mission_adopted"
+  | "social_mission_adopted"
   | "reflection_answered"
   | "card_mode_opened";
 

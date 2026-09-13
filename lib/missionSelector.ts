@@ -3,6 +3,7 @@ import { communityMissions } from "@/data/community";
 import type { Mission, Mood, CommunityMission } from "@/types/mission";
 import type { PlaceContext, SchedulePressure, SocialContext } from "@/types/context";
 import { getRecentMissionIds, getCompletedCount } from "@/lib/storage";
+import { getImportedMission } from "@/lib/socialMissions";
 
 export interface SelectionInput {
   minutes: number;
@@ -244,5 +245,7 @@ export function findMissionById(id: string): Mission | undefined {
   const found = missions.find((m) => m.id === id);
   if (found) return found;
   const community = communityMissions.find((c) => c.id === id);
-  return community ? communityMissionToMission(community) : undefined;
+  if (community) return communityMissionToMission(community);
+  // 「私もやってみる」で他人の投稿から採用したミッション（lib/socialMissions.ts）。
+  return getImportedMission(id);
 }

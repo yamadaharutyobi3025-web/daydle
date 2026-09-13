@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { PhoneModeBadge } from "@/components/PhoneModeBadge";
 import { PostPhoto } from "@/components/PostPhoto";
+import { TryThisButton } from "@/components/TryThisButton";
 import { dateKey, formatJapaneseDate } from "@/lib/date";
 import type { PostWithProfile } from "@/types/supabase";
 import type { AllowedTool } from "@/types/mission";
@@ -81,6 +82,16 @@ export function PostCard({ post }: { post: PostWithProfile }) {
           <PostPhoto postId={post.id} />
         </div>
       )}
+
+      <TryThisButton
+        post={{
+          id: post.id,
+          mission_text: post.mission_text,
+          duration_minutes: post.duration_minutes,
+          phone_mode: post.phone_mode,
+          allowed_tools: post.allowed_tools,
+        }}
+      />
     </li>
   );
 }
