@@ -2,6 +2,7 @@ import Link from "next/link";
 import { PhoneModeBadge } from "@/components/PhoneModeBadge";
 import { PostPhoto } from "@/components/PostPhoto";
 import { TryThisButton } from "@/components/TryThisButton";
+import { PostTriers } from "@/components/PostTriers";
 import { dateKey, formatJapaneseDate } from "@/lib/date";
 import type { PostWithProfile } from "@/types/supabase";
 import type { AllowedTool } from "@/types/mission";
@@ -92,6 +93,8 @@ export function PostCard({ post }: { post: PostWithProfile }) {
           allowed_tools: post.allowed_tools,
         }}
       />
+
+      <PostTriers postId={post.id} />
     </li>
   );
 }

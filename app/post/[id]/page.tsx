@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Logo } from "@/components/Logo";
 import { PhoneModeBadge } from "@/components/PhoneModeBadge";
+import { PostTriers } from "@/components/PostTriers";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { dateKey, formatJapaneseDate } from "@/lib/date";
@@ -95,6 +96,8 @@ export default async function PostDetailPage({
         // eslint-disable-next-line @next/next/no-img-element
         <img src={photoUrl} alt="" className="mt-6 w-full rounded-2xl object-cover" />
       )}
+
+      <PostTriers postId={post.id} />
     </main>
   );
 }

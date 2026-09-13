@@ -103,6 +103,19 @@ export type Database = {
           },
         ];
       };
+      post_tries: {
+        Row: {
+          post_id: string;
+          user_id: string;
+          completed_at: string;
+        };
+        Insert: {
+          post_id: string;
+          user_id: string;
+        };
+        Update: never;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -121,6 +134,10 @@ export type Database = {
       get_following: {
         Args: { target: string };
         Returns: FollowListItem[];
+      };
+      get_post_tries: {
+        Args: { target_post_id: string };
+        Returns: { id: string; username: string; display_name: string | null }[];
       };
     };
   };

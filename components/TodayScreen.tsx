@@ -16,6 +16,8 @@ import {
 import { formatJapaneseDate } from "@/lib/date";
 import { trackEvent } from "@/lib/track";
 import { primeAudio } from "@/lib/timerAlert";
+import { postIdFromMissionId } from "@/lib/socialMissions";
+import { recordPostTryCompletion } from "@/lib/postTries";
 
 export function TodayScreen({
   initial,
@@ -70,6 +72,13 @@ export function TodayScreen({
       reflection: null,
     });
     trackEvent("mission_completed", { missionId: state.missionId });
+
+    // 「私もやってみる」で採用したミッションを実際に完了した時点でだけ、
+    // 誰がやってみたかの記録を残す（採用しただけの時点では記録しない）。
+    // 失敗しても完了フロー自体は止めない。
+    const postId = postIdFromMissionId(state.missionId);
+    if (postId) void recordPostTryCompletion(postId);
+
     router.push("/journal");
   }
 

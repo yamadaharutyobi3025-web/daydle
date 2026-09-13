@@ -44,8 +44,15 @@ function save(map: ImportedMissionsMap): void {
   }
 }
 
+const SOCIAL_PREFIX = "social:";
+
 export function socialMissionId(postId: string): string {
-  return `social:${postId}`;
+  return `${SOCIAL_PREFIX}${postId}`;
+}
+
+/** missionIdが「私もやってみる」で採用したものなら、元のpost idを返す。 */
+export function postIdFromMissionId(missionId: string): string | null {
+  return missionId.startsWith(SOCIAL_PREFIX) ? missionId.slice(SOCIAL_PREFIX.length) : null;
 }
 
 export function getImportedMission(id: string): Mission | undefined {
