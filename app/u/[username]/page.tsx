@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Logo } from "@/components/Logo";
 import { FollowButton } from "@/components/FollowButton";
+import { ProfilePosts } from "@/components/ProfilePosts";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function PublicProfilePage({
@@ -26,7 +27,7 @@ export default async function PublicProfilePage({
     data: { user: viewer },
   } = await supabase.auth.getUser();
 
-  const [{ data: counts }, relation] = await Promise.all([
+  const [{ data: counts }, relation, { data: canViewPosts }] = await Promise.all([
     supabase.rpc("get_follow_counts", { target: profile.id }),
     viewer
       ? supabase
@@ -36,6 +37,10 @@ export default async function PublicProfilePage({
           .eq("followee_id", profile.id)
           .maybeSingle()
       : Promise.resolve({ data: null }),
+    // 投稿一覧を見せてよいかは、フォロー中/フォロワー一覧と全く同じ基準
+    // （対象が公開 or 本人 or 対象への承認済みフォロー）なので、その判定用
+    // に既に用意されているSECURITY DEFINER関数をそのまま再利用する。
+    supabase.rpc("can_view_follow_lists", { target: profile.id }),
   ]);
 
   const followersCount = counts?.[0]?.followers_count ?? 0;
@@ -84,6 +89,15 @@ export default async function PublicProfilePage({
           initialStatus={initialStatus}
         />
       </div>
+
+      {canViewPosts && (
+        <section className="mt-14 border-t border-line/60 pt-10">
+          <h2 className="text-[13px] text-ink-soft">この人の遠回り</h2>
+          <div className="mt-5">
+            <ProfilePosts userId={profile.id} />
+          </div>
+        </section>
+      )}
     </main>
   );
 }
