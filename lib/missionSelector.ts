@@ -285,9 +285,21 @@ const OUTSIDE_LEANING_CATEGORIES: MissionCategory[] = ["walk", "nature", "advent
  */
 function situationAffinity(mission: Mission, situation: Situation): number {
   if (situation === "unsure") {
-    // 状況未回答では除外はしないが、本文が特定の場所を前提にしている
-    // ミッション（contexts.places）は場所依存性が高いとみなし優先度を下げる。
-    return mission.contexts?.places?.length ? 0 : 1;
+    // 状況未回答では除外はしないが、「今いる場所を選ばず成立するか」で
+    // 3段階に優先度を分ける。ハードな場所・状況依存
+    // （contexts.places／requiresOutside／requiresOtherPeopleNearby／
+    // requiresTravel）を持つミッションは、家にいるか外にいるか分からない
+    // unsureユーザーには必ずしも成立しないため最も下げる。
+    // 残りはenvironment（既存メタデータ）で判定：
+    // "either"＝屋内でも屋外でも成立するので最優先、
+    // "inside"/"outside"は「今どちらにいるか」次第で前提が崩れうるため
+    // 一段下げる。新しい条件軸は追加していない。
+    const c = mission.contexts;
+    const hasStrongDependency = Boolean(
+      c?.places?.length || c?.requiresOutside || c?.requiresOtherPeopleNearby || c?.requiresTravel
+    );
+    if (hasStrongDependency) return 0;
+    return mission.environment === "either" ? 2 : 1;
   }
 
   const c = mission.contexts;
