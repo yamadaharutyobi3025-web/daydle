@@ -13,6 +13,7 @@ import { useClientSnapshot, UNLOADED } from "@/lib/useClientSnapshot";
 import { trackEvent } from "@/lib/track";
 import { communityMissionToMission } from "@/lib/missionSelector";
 import { SocialFeed } from "@/components/SocialFeed";
+import { RecentPosters } from "@/components/RecentPosters";
 import type { CommunityMission } from "@/types/mission";
 
 export default function CommunityPage() {
@@ -106,6 +107,9 @@ export default function CommunityPage() {
         </div>
       )}
 
+      <div className="mt-14">
+        <RecentPosters />
+      </div>
       <SocialFeed />
     </main>
   );
