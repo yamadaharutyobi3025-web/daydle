@@ -427,11 +427,21 @@ function feelingAffinity(mission: Mission, feeling: Feeling, situation: Situatio
  * 「気分」と「実行場所」を別軸として扱う。
  * "unsure"（状況未回答）はここでは除外せず、situationAffinity側で
  * 場所依存の強いミッションを弱く優先度づけするにとどめる。
+ *
+ * "transit"（移動中）はrequiresOutsideの除外対象に含める：電車・バスの
+ * 同乗中や車での移動中も「移動中」に含まれるため、「外に出る」ことを
+ * 前提とするミッションは物理的に実行できない（駅の待機のように一時的に
+ * 屋外にいる場合もあるが、外出中と違い「今から外に出る」選択肢自体が
+ * 無いケースを含むため、outsideとは別軸としてrequiresOutsideを常に除外
+ * する側に倒す）。requiresOutsideを持つミッションはほぼ全て「外に出て」
+ * 「歩いて」のような移動前提の本文であるため、この一行の変更だけで
+ * transitの候補プールから「外に出る／歩いて離れる／店や公園に立ち寄る」
+ * 系のミッションのほとんどが自動的に除外される。
  */
 function isPhysicallyFeasibleForSituation(mission: Mission, situation: Situation): boolean {
   const c = mission.contexts;
   if (!c || situation === "unsure") return true;
-  if (c.requiresOutside && situation !== "outside" && situation !== "transit") return false;
+  if (c.requiresOutside && situation !== "outside") return false;
   if (c.requiresOtherPeopleNearby && situation === "home") return false;
   if (c.requiresTravel && situation === "home") return false;
   if (c.places?.length && !c.places.includes(situation)) return false;

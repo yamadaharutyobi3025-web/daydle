@@ -898,8 +898,8 @@ export const missions: Mission[] = [
   },
   {
     id: "nostalgia_005",
-    title: "思い出の場所を歩くつもりで10歩",
-    description: "好きだった思い出の場所を思い浮かべて、そこを歩くつもりで、今いる場所を10歩だけ歩いてください。",
+    title: "似ている景色を探す",
+    description: "好きだった思い出の場所を思い浮かべて、今見えている景色の中に、少しでも似ているところを1つ探してください。",
     duration: 5,
     environment: "either",
     moods: ["quiet", "outside"],
@@ -1064,8 +1064,8 @@ export const missions: Mission[] = [
   },
   {
     id: "pointless_011",
-    title: "10歩だけ遠回りする",
-    description: "今すぐ、いつもと違う方向へ10歩だけ歩いてから戻ってください。",
+    title: "目に入った3つの物に名前をつける",
+    description: "今、目に入った3つの物に、勝手な名前をつけてください。理由はいりません。",
     duration: 5,
     environment: "either",
     moods: ["empty", "adventure", "outside"],
