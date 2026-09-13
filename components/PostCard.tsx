@@ -6,7 +6,12 @@ import type { PostWithProfile } from "@/types/supabase";
 import type { AllowedTool } from "@/types/mission";
 
 export function PostCard({ post }: { post: PostWithProfile }) {
-  const dateLabel = formatJapaneseDate(dateKey(new Date(post.created_at)));
+  const createdAt = new Date(post.created_at);
+  const dateLabel = formatJapaneseDate(dateKey(createdAt));
+  const timeLabel = createdAt.toLocaleTimeString("ja-JP", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
   return (
     <li className="rounded-2xl bg-cream-deep/30 p-5">
@@ -20,7 +25,7 @@ export function PostCard({ post }: { post: PostWithProfile }) {
         <div className="text-sm">
           <p className="text-ink">{post.profiles.display_name || post.profiles.username}</p>
           <p className="text-xs text-ink-soft/70">
-            @{post.profiles.username} ・ {dateLabel}
+            @{post.profiles.username} ・ {dateLabel} {timeLabel}
           </p>
         </div>
       </Link>

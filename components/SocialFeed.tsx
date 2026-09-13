@@ -10,6 +10,13 @@ import type { PostWithProfile } from "@/types/supabase";
 
 type Tab = "following" | "everyone";
 
+type FeedResult = {
+  tab: Tab;
+  posts: PostWithProfile[];
+  /** フォロー中タブの空表示の出し分けに使う（0人フォロー vs 未投稿）。 */
+  followingCount?: number;
+};
+
 const POST_COLUMNS =
   "id, user_id, mission_text, duration_minutes, phone_mode, allowed_tools, note, photo_path, created_at";
 
@@ -17,13 +24,15 @@ const POST_COLUMNS =
  * 「みんな」画面の下に追加する、Supabaseの投稿フィード。
  * 既存の静的な「みんなの遠回り例」セクションはそのまま残し、
  * このセクションはその下に独立して追加する。
+ *
+ * 「みんな」タブは公開投稿のみを見せるため未ログインでも動く
+ * （posts/profilesのRLSがanonにもselectを許可しているため）。
+ * 「フォロー中」タブだけログインが必要。
  */
 export function SocialFeed() {
-  // 確認が終わるまでは「未ログイン」表示にしておき、ログイン済みと
-  // 分かった時点でだけ更新する（未確認の間だけ出る中間状態を作らない）。
   const [userId, setUserId] = useState<string | null>(null);
-  const [tab, setTab] = useState<Tab>("following");
-  const [posts, setPosts] = useState<PostWithProfile[] | null>(null);
+  const [tab, setTab] = useState<Tab>("everyone");
+  const [result, setResult] = useState<FeedResult | null>(null);
 
   useEffect(() => {
     if (!isSupabaseConfigured()) return;
@@ -39,13 +48,12 @@ export function SocialFeed() {
   }, []);
 
   useEffect(() => {
-    if (!userId) return;
+    if (tab === "following" && !userId) return;
 
     let cancelled = false;
 
     async function load() {
       const supabase = createClient();
-      let result: PostWithProfile[] = [];
 
       if (tab === "following") {
         const { data: following } = await supabase
@@ -54,6 +62,8 @@ export function SocialFeed() {
           .eq("follower_id", userId!)
           .eq("status", "accepted");
         const ids = (following ?? []).map((f) => f.followee_id);
+
+        let posts: PostWithProfile[] = [];
         if (ids.length > 0) {
           const { data, error } = await supabase
             .from("posts")
@@ -62,22 +72,24 @@ export function SocialFeed() {
             .order("created_at", { ascending: false })
             .limit(30);
           if (error) console.error("following feed failed", error);
-          result = (data ?? []) as unknown as PostWithProfile[];
+          posts = (data ?? []) as unknown as PostWithProfile[];
         }
-      } else {
-        const { data, error } = await supabase
-          .from("posts")
-          .select(
-            `${POST_COLUMNS}, profiles!inner(username, display_name, avatar_url, is_private)`
-          )
-          .eq("profiles.is_private", false)
-          .order("created_at", { ascending: false })
-          .limit(30);
-        if (error) console.error("public feed failed", error);
-        result = (data ?? []) as unknown as PostWithProfile[];
+        if (!cancelled) setResult({ tab: "following", posts, followingCount: ids.length });
+        return;
       }
 
-      if (!cancelled) setPosts(result);
+      const { data, error } = await supabase
+        .from("posts")
+        .select(
+          `${POST_COLUMNS}, profiles!inner(username, display_name, avatar_url, is_private)`
+        )
+        .eq("profiles.is_private", false)
+        .order("created_at", { ascending: false })
+        .limit(30);
+      if (error) console.error("public feed failed", error);
+      if (!cancelled) {
+        setResult({ tab: "everyone", posts: (data ?? []) as unknown as PostWithProfile[] });
+      }
     }
 
     void load();
@@ -86,18 +98,9 @@ export function SocialFeed() {
     };
   }, [userId, tab]);
 
-  if (!userId) {
-    return (
-      <section className="mt-14 border-t border-line/60 pt-10 text-center">
-        <p className="text-sm leading-loose text-ink-soft">
-          ログインすると、フォロー中の人やみんなの投稿を見られます。
-        </p>
-        <Link href="/login" className="mt-4 inline-block">
-          <Button variant="ghost">ログイン</Button>
-        </Link>
-      </section>
-    );
-  }
+  // 別タブの結果が残っている間は「読み込み中」扱いにして、
+  // 切り替え直後に前のタブの投稿が一瞬見えてしまうのを防ぐ。
+  const current = result?.tab === tab ? result : null;
 
   return (
     <section className="mt-14 border-t border-line/60 pt-10">
@@ -123,22 +126,38 @@ export function SocialFeed() {
       </div>
 
       <div className="mt-6">
-        {posts === null && <p className="text-sm text-ink-soft">読み込み中…</p>}
-        {posts !== null && posts.length === 0 && tab === "following" && (
-          <p className="text-sm leading-loose text-ink-soft">
-            まだ誰もフォローしていません。
-            <br />
-            <Link href="/search" className="underline underline-offset-4">
-              ユーザーを探す
+        {tab === "following" && !userId ? (
+          <div className="text-center">
+            <p className="text-sm leading-loose text-ink-soft">
+              ログインすると、フォロー中の人の投稿を見られます。
+            </p>
+            <Link href="/login" className="mt-4 inline-block">
+              <Button variant="ghost">ログイン</Button>
             </Link>
+          </div>
+        ) : current === null ? (
+          <p className="text-sm text-ink-soft">読み込み中…</p>
+        ) : current.posts.length === 0 ? (
+          <p className="text-sm leading-loose text-ink-soft">
+            {tab === "following" ? (
+              current.followingCount === 0 ? (
+                <>
+                  まだ誰もフォローしていません。
+                  <br />
+                  <Link href="/search" className="underline underline-offset-4">
+                    ユーザーを探す
+                  </Link>
+                </>
+              ) : (
+                "まだフォロー中の遠回りはありません。"
+              )
+            ) : (
+              "まだ投稿がありません。"
+            )}
           </p>
-        )}
-        {posts !== null && posts.length === 0 && tab === "everyone" && (
-          <p className="text-sm text-ink-soft">まだ投稿がありません。</p>
-        )}
-        {posts !== null && posts.length > 0 && (
+        ) : (
           <ul className="flex flex-col gap-4">
-            {posts.map((post) => (
+            {current.posts.map((post) => (
               <PostCard key={post.id} post={post} />
             ))}
           </ul>

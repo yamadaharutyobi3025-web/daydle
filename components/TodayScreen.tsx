@@ -163,6 +163,11 @@ export function TodayScreen({
             <p className="text-center text-sm leading-loose text-ink-soft">
               今日の遠回りは、もう終えています。
             </p>
+            <Link href="/post/new">
+              <Button variant="ghost" className="w-full">
+                今日の遠回りを投稿する
+              </Button>
+            </Link>
             <div className="mt-1 flex items-center justify-center gap-4 text-xs text-ink-soft/60">
               <Link href="/record" className="touch-manipulation -mx-2 -my-3 px-2 py-3">
                 記録を見る
