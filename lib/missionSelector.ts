@@ -356,13 +356,19 @@ const ACTIVE_CATEGORIES: MissionCategory[] = ["walk", "adventure"];
  * 移動系ミッション）が、quiet/nature系の静かなミッションと同格に扱われて
  * しまう。「状況で不可能なものを落とす→その中で気分に合うものを上げる」
  * という考え方に寄せるため、気分側の一致にもこの程度の濃淡を持たせる。
- * 現時点では「落ち着きたい×移動・運動系」の組み合わせのみを対象にした
- * 最小限の調整（何かしたい・気分がいい側でwalk/adventureを上げる調整は
- * 既に状況スコア側で十分機能しているため、ここでは行わない）。
+ *
+ * 調整は2種類のみ：
+ * - 「落ち着きたい」×移動・運動系カテゴリ（walk/adventure）を一段下げる。
+ * - 「少し疲れている」×frictionLevel2以上（準備・移動が必要／明確な行動
+ *   変更が必要）を一段下げる。frictionLevel0〜1（その場ですぐ／軽い散歩・
+ *   短い寄り道程度）はそのまま2のまま＝完全には除外しない。
+ * （何かしたい・気分がいい側でwalk/adventureを上げる調整は既に状況スコア
+ * 側で十分機能しているため、ここでは行わない）。
  */
 function feelingAffinity(mission: Mission, feeling: Feeling): number {
   if (!deriveFeelings(mission).includes(feeling)) return 0;
   if (feeling === "calm_seeking" && ACTIVE_CATEGORIES.includes(mission.category)) return 1;
+  if (feeling === "tired" && (mission.frictionLevel ?? 1) >= 2) return 1;
   return 2;
 }
 
