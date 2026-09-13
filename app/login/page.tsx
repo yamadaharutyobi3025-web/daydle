@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import Link from "next/link";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/Button";
 import { createClient } from "@/lib/supabase/client";
@@ -76,6 +77,15 @@ export default function LoginPage() {
             ログイン用リンクを送る
           </Button>
         </form>
+      )}
+
+      {process.env.NODE_ENV === "development" && (
+        <Link
+          href="/dev-login"
+          className="mt-6 text-center text-xs text-ink-soft/60 underline underline-offset-4"
+        >
+          (開発用) パスワードでログイン
+        </Link>
       )}
     </main>
   );
