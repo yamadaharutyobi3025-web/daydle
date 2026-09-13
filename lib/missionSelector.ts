@@ -344,6 +344,28 @@ function deriveFeelings(mission: Mission): Feeling[] {
   return Array.from(set);
 }
 
+/** 「落ち着きたい」に対して、移動・運動を伴うカテゴリを一段下げる対象。 */
+const ACTIVE_CATEGORIES: MissionCategory[] = ["walk", "adventure"];
+
+/**
+ * 気分との合いやすさを0〜2の3段階で採点する。0=気分タグが一致しない、
+ * 1=一致はするが、その気分にはあまり適さない性質を持つ、2=通常の一致。
+ *
+ * moods由来の一致判定（deriveFeelings）だけだと、例えば「落ち着きたい」で
+ * walk/adventureカテゴリ（moodsに"empty"や"quiet"を併記しているだけの
+ * 移動系ミッション）が、quiet/nature系の静かなミッションと同格に扱われて
+ * しまう。「状況で不可能なものを落とす→その中で気分に合うものを上げる」
+ * という考え方に寄せるため、気分側の一致にもこの程度の濃淡を持たせる。
+ * 現時点では「落ち着きたい×移動・運動系」の組み合わせのみを対象にした
+ * 最小限の調整（何かしたい・気分がいい側でwalk/adventureを上げる調整は
+ * 既に状況スコア側で十分機能しているため、ここでは行わない）。
+ */
+function feelingAffinity(mission: Mission, feeling: Feeling): number {
+  if (!deriveFeelings(mission).includes(feeling)) return 0;
+  if (feeling === "calm_seeking" && ACTIVE_CATEGORIES.includes(mission.category)) return 1;
+  return 2;
+}
+
 /**
  * 物理的に不可能な組み合わせだけを除外する（既存のisContextFeasibleと
  * 同じハード制約。Mission.contexts.placesによる厳密な絞り込みはここでは
@@ -377,18 +399,25 @@ function pickFewForContext(candidates: Mission[]): string[] {
 /**
  * 状況・気分から今日の候補（最大3件、[0]が提示する1件）を選ぶ。
  *
- * 優先順位は「状況適合 > 気分適合 > 直近との重複回避」。
- * situationAffinityで状況スコア（0〜3、高いほど合う）を採点し、スコアの
- * 高い側から順に「その水準以上 かつ 気分も一致」する候補を探し、無ければ
- * 気分は問わず同じ水準の候補を探す。それでも無ければ状況スコアの水準を
- * 一段階だけ緩める、を繰り返す。状況を気分より先に緩めることは
- * しない＝状況適合を気分適合より優先したまま候補が0件になるのを防ぐ。
+ * 考え方：「状況で明確に不可能・不向きなものを落とす → その中で気分に
+ * 合うものを上げる」。優先順位そのものは「状況適合 > 気分適合 >
+ * 直近との重複回避」のまま変えていないが、状況適合が気分適合を
+ * 完全に押し切らないようにするため、状況スコア（0〜3）の水準を
+ * 高い方から順に試しながら、各水準でまず気分スコア（0〜2）が
+ * 高い候補を探す：
+ *   1. 状況水準A以上 かつ 気分にもよく合う（feelingScore=2）
+ *   2. 状況水準A以上 かつ 気分に一応合う（feelingScore>=1）
+ *   3. （1・2とも0件なら）状況水準を一段階緩めて、水準Bでまた1から
+ * のいずれかで候補が見つかった時点で確定する。状況水準をどこまで緩めても
+ * 気分に合う候補が1件も無い場合だけ、最後に気分を諦めて最上位の状況水準
+ * （situationThresholds[0]）だけで候補を返す＝状況適合が気分適合より
+ * 優先されたまま0件になることは無い。
  * 重複回避（直近の未出現優先）と最終的なランダム性はpickFewForContext側。
  *
  * どの段階でも物理的に不可能な組み合わせ（isPhysicallyFeasibleForSituation）
- * は除外したまま。同じ状況・気分でも候補プールが複数件残るように
- * scoreは粗め（0〜3の4段階）にとどめ、厳しくしすぎて毎回同じ1件に
- * 収束しないようにしている。
+ * は除外したまま。スコアはどちらも粗め（状況0〜3・気分0〜2）にとどめ、
+ * 同じ状況・気分でも候補プールが複数件残るようにして、厳しくしすぎて
+ * 毎回同じ1件に収束しないようにしている。
  */
 export function selectByStateAndFeeling(situation: Situation, feeling: Feeling): string[] {
   const feasiblePool = missions.filter((m) => isPhysicallyFeasibleForSituation(m, situation));
@@ -397,7 +426,7 @@ export function selectByStateAndFeeling(situation: Situation, feeling: Feeling):
   const scored = pool.map((m) => ({
     mission: m,
     situationScore: situationAffinity(m, situation),
-    feelingMatch: deriveFeelings(m).includes(feeling),
+    feelingScore: feelingAffinity(m, feeling),
   }));
 
   const situationThresholds = Array.from(new Set(scored.map((s) => s.situationScore))).sort(
@@ -405,12 +434,21 @@ export function selectByStateAndFeeling(situation: Situation, feeling: Feeling):
   );
 
   for (const threshold of situationThresholds) {
-    const withFeeling = scored.filter((s) => s.situationScore >= threshold && s.feelingMatch);
-    if (withFeeling.length > 0) return pickFewForContext(withFeeling.map((s) => s.mission));
+    const inTier = scored.filter((s) => s.situationScore >= threshold);
+    if (inTier.length === 0) continue;
 
-    const withoutFeeling = scored.filter((s) => s.situationScore >= threshold);
-    if (withoutFeeling.length > 0) return pickFewForContext(withoutFeeling.map((s) => s.mission));
+    const bestFeeling = inTier.filter((s) => s.feelingScore === 2);
+    if (bestFeeling.length > 0) return pickFewForContext(bestFeeling.map((s) => s.mission));
+
+    const anyFeeling = inTier.filter((s) => s.feelingScore >= 1);
+    if (anyFeeling.length > 0) return pickFewForContext(anyFeeling.map((s) => s.mission));
+
+    // この状況水準には気分に合う候補が1件も無い。状況水準をもう一段階
+    // 緩めて（＝situationThresholdsの次のより低い値へ）気分一致を探す。
   }
 
-  return pickFewForContext(pool);
+  // 状況水準をどこまで緩めても気分一致が無かった場合のみ、気分を諦めて
+  // 最上位の状況水準を返す。
+  const topTier = scored.filter((s) => s.situationScore >= situationThresholds[0]);
+  return pickFewForContext(topTier.map((s) => s.mission));
 }
