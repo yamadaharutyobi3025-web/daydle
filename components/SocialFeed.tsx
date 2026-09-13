@@ -6,6 +6,7 @@ import { Button } from "@/components/Button";
 import { PostCard } from "@/components/PostCard";
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { interleaveByUser } from "@/lib/interleavePosts";
 import type { PostWithProfile } from "@/types/supabase";
 
 type Tab = "following" | "everyone";
@@ -88,7 +89,10 @@ export function SocialFeed() {
         .limit(30);
       if (error) console.error("public feed failed", error);
       if (!cancelled) {
-        setResult({ tab: "everyone", posts: (data ?? []) as unknown as PostWithProfile[] });
+        // 「みんな」タブだけ、同じ投稿者が連続しすぎないよう軽く並び替える
+        // （フォロー中タブは対象外。純粋な新しい順のまま）。
+        const posts = interleaveByUser((data ?? []) as unknown as PostWithProfile[]);
+        setResult({ tab: "everyone", posts });
       }
     }
 
