@@ -116,6 +116,30 @@ export type Database = {
         Update: never;
         Relationships: [];
       };
+      notifications: {
+        Row: {
+          id: string;
+          user_id: string;
+          type: "follow_request" | "follow_accepted" | "post_try_completed";
+          actor_id: string;
+          post_id: string | null;
+          created_at: string;
+          read_at: string | null;
+        };
+        Insert: never;
+        Update: {
+          read_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "notifications_actor_profiles_fkey";
+            columns: ["actor_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {

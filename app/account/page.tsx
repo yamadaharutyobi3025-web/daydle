@@ -26,14 +26,20 @@ export default async function AccountPage() {
     .eq("id", user.id)
     .single();
 
-  const [{ data: counts }, { count: pendingRequestCount }] = await Promise.all([
-    supabase.rpc("get_follow_counts", { target: user.id }),
-    supabase
-      .from("follows")
-      .select("*", { count: "exact", head: true })
-      .eq("followee_id", user.id)
-      .eq("status", "pending"),
-  ]);
+  const [{ data: counts }, { count: pendingRequestCount }, { count: unreadNotificationCount }] =
+    await Promise.all([
+      supabase.rpc("get_follow_counts", { target: user.id }),
+      supabase
+        .from("follows")
+        .select("*", { count: "exact", head: true })
+        .eq("followee_id", user.id)
+        .eq("status", "pending"),
+      supabase
+        .from("notifications")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .is("read_at", null),
+    ]);
   const followersCount = counts?.[0]?.followers_count ?? 0;
   const followingCount = counts?.[0]?.following_count ?? 0;
 
@@ -79,6 +85,11 @@ export default async function AccountPage() {
       )}
 
       <div className="mt-6 flex flex-col gap-3">
+        <Link href="/notifications">
+          <Button variant="ghost" className="w-full">
+            通知{unreadNotificationCount ? ` ${unreadNotificationCount}` : ""}
+          </Button>
+        </Link>
         <Link href="/account/edit">
           <Button variant="ghost" className="w-full">
             プロフィールを編集
