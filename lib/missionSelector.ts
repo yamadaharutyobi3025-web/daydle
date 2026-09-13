@@ -284,7 +284,11 @@ const OUTSIDE_LEANING_CATEGORIES: MissionCategory[] = ["walk", "nature", "advent
  * - 特に決まっていない: 状況では絞り込まず、気分適合だけに委ねる。
  */
 function situationAffinity(mission: Mission, situation: Situation): number {
-  if (situation === "unsure") return 1;
+  if (situation === "unsure") {
+    // 状況未回答では除外はしないが、本文が特定の場所を前提にしている
+    // ミッション（contexts.places）は場所依存性が高いとみなし優先度を下げる。
+    return mission.contexts?.places?.length ? 0 : 1;
+  }
 
   const c = mission.contexts;
   const friction = mission.frictionLevel ?? 1;
@@ -374,8 +378,17 @@ function feelingAffinity(mission: Mission, feeling: Feeling): number {
 
 /**
  * 物理的に不可能な組み合わせだけを除外する（既存のisContextFeasibleと
- * 同じハード制約。Mission.contexts.placesによる厳密な絞り込みはここでは
- * 使わない＝状況タグの方はやや緩めに扱う）。
+ * 同じハード制約）。
+ *
+ * Mission.contexts.placesは「気分」とは別の軸＝本文が前提とする実行場所の
+ * ハード制約として扱う。「家」「自宅」「冷蔵庫」等、家であることを前提に
+ * するミッションにはcontexts.places: ["home"]が既存データとして
+ * 一貫して設定されている（home_*だけでなく、quiet_003やbook_002等にも
+ * 元から付与済み）。気分側のタグ付け（moods、deriveFeelings）をいくら
+ * 広げても、本文が前提とする場所と矛盾する組み合わせをここで除外することで
+ * 「気分」と「実行場所」を別軸として扱う。
+ * "unsure"（状況未回答）はここでは除外せず、situationAffinity側で
+ * 場所依存の強いミッションを弱く優先度づけするにとどめる。
  */
 function isPhysicallyFeasibleForSituation(mission: Mission, situation: Situation): boolean {
   const c = mission.contexts;
@@ -383,6 +396,7 @@ function isPhysicallyFeasibleForSituation(mission: Mission, situation: Situation
   if (c.requiresOutside && situation !== "outside" && situation !== "transit") return false;
   if (c.requiresOtherPeopleNearby && situation === "home") return false;
   if (c.requiresTravel && situation === "home") return false;
+  if (c.places?.length && !c.places.includes(situation)) return false;
   return true;
 }
 
