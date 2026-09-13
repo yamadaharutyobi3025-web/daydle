@@ -352,6 +352,23 @@ function deriveFeelings(mission: Mission): Feeling[] {
 const ACTIVE_CATEGORIES: MissionCategory[] = ["walk", "adventure"];
 
 /**
+ * 「仕事・学校の合間×退屈している」限定：窓・空（の見える場所）・
+ * エレベーター・雑誌・鏡など、職場や学校に必ずあるとは限らない特定の
+ * 設備・物を本文が前提にしているミッション。完全除外ではなく、
+ * このピンポイントの組み合わせでだけ一段優先度を下げる（feelingAffinity
+ * 側でsituationも見て判定するのはこの1組み合わせのためだけで、他の
+ * situation×feelingの結果には影響しない＝地下・窓なしの職場や学校でも
+ * 上位5件がその場で成立するようにするための最小限の調整）。
+ */
+const WORK_SCHOOL_PROP_DEPENDENT_IDS = new Set([
+  "quiet_005", // 窓
+  "pointless_002", // 空
+  "pointless_006", // 鏡
+  "adventure_002", // エレベーター
+  "book_004", // 雑誌
+]);
+
+/**
  * 気分との合いやすさを0〜2の3段階で採点する。0=気分タグが一致しない、
  * 1=一致はするが、その気分にはあまり適さない性質を持つ、2=通常の一致。
  *
@@ -361,18 +378,27 @@ const ACTIVE_CATEGORIES: MissionCategory[] = ["walk", "adventure"];
  * しまう。「状況で不可能なものを落とす→その中で気分に合うものを上げる」
  * という考え方に寄せるため、気分側の一致にもこの程度の濃淡を持たせる。
  *
- * 調整は2種類のみ：
+ * 調整は3種類のみ：
  * - 「落ち着きたい」×移動・運動系カテゴリ（walk/adventure）を一段下げる。
  * - 「少し疲れている」×frictionLevel2以上（準備・移動が必要／明確な行動
  *   変更が必要）を一段下げる。frictionLevel0〜1（その場ですぐ／軽い散歩・
  *   短い寄り道程度）はそのまま2のまま＝完全には除外しない。
+ * - 「仕事・学校の合間×退屈している」×特定設備・物を前提にするミッション
+ *   を一段下げる（上のWORK_SCHOOL_PROP_DEPENDENT_IDS参照）。
  * （何かしたい・気分がいい側でwalk/adventureを上げる調整は既に状況スコア
  * 側で十分機能しているため、ここでは行わない）。
  */
-function feelingAffinity(mission: Mission, feeling: Feeling): number {
+function feelingAffinity(mission: Mission, feeling: Feeling, situation: Situation): number {
   if (!deriveFeelings(mission).includes(feeling)) return 0;
   if (feeling === "calm_seeking" && ACTIVE_CATEGORIES.includes(mission.category)) return 1;
   if (feeling === "tired" && (mission.frictionLevel ?? 1) >= 2) return 1;
+  if (
+    feeling === "bored" &&
+    situation === "work_school" &&
+    WORK_SCHOOL_PROP_DEPENDENT_IDS.has(mission.id)
+  ) {
+    return 1;
+  }
   return 2;
 }
 
@@ -446,7 +472,7 @@ export function selectByStateAndFeeling(situation: Situation, feeling: Feeling):
   const scored = pool.map((m) => ({
     mission: m,
     situationScore: situationAffinity(m, situation),
-    feelingScore: feelingAffinity(m, feeling),
+    feelingScore: feelingAffinity(m, feeling, situation),
   }));
 
   const situationThresholds = Array.from(new Set(scored.map((s) => s.situationScore))).sort(
