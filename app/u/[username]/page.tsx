@@ -27,21 +27,32 @@ export default async function PublicProfilePage({
     data: { user: viewer },
   } = await supabase.auth.getUser();
 
-  const [{ data: counts }, relation, { data: canViewPosts }] = await Promise.all([
-    supabase.rpc("get_follow_counts", { target: profile.id }),
-    viewer
-      ? supabase
-          .from("follows")
-          .select("status")
-          .eq("follower_id", viewer.id)
-          .eq("followee_id", profile.id)
-          .maybeSingle()
-      : Promise.resolve({ data: null }),
-    // 投稿一覧を見せてよいかは、フォロー中/フォロワー一覧と全く同じ基準
-    // （対象が公開 or 本人 or 対象への承認済みフォロー）なので、その判定用
-    // に既に用意されているSECURITY DEFINER関数をそのまま再利用する。
-    supabase.rpc("can_view_follow_lists", { target: profile.id }),
-  ]);
+  const [{ data: counts }, relation, { data: canViewPosts }, { data: recentPosts }] =
+    await Promise.all([
+      supabase.rpc("get_follow_counts", { target: profile.id }),
+      viewer
+        ? supabase
+            .from("follows")
+            .select("status")
+            .eq("follower_id", viewer.id)
+            .eq("followee_id", profile.id)
+            .maybeSingle()
+        : Promise.resolve({ data: null }),
+      // 投稿一覧を見せてよいかは、フォロー中/フォロワー一覧と全く同じ基準
+      // （対象が公開 or 本人 or 対象への承認済みフォロー）なので、その判定用
+      // に既に用意されているSECURITY DEFINER関数をそのまま再利用する。
+      supabase.rpc("can_view_follow_lists", { target: profile.id }),
+      // 「最近の遠回り」用。postsの通常のRLS（posts_select_visible）に
+      // 従うだけで、追加の権限チェックはしていない。非公開かつ閲覧者が
+      // 承認済みフォロワーでない場合は自然に0件になり、そのままセクション
+      // 非表示に繋がる（下のcanViewPostsの判定と条件が一致するため）。
+      supabase
+        .from("posts")
+        .select("id, mission_text")
+        .eq("user_id", profile.id)
+        .order("created_at", { ascending: false })
+        .limit(3),
+    ]);
 
   const followersCount = counts?.[0]?.followers_count ?? 0;
   const followingCount = counts?.[0]?.following_count ?? 0;
@@ -70,6 +81,24 @@ export default async function PublicProfilePage({
         <p className="mt-4 whitespace-pre-wrap text-sm leading-relaxed text-ink-soft">
           {profile.bio}
         </p>
+      )}
+
+      {recentPosts && recentPosts.length > 0 && (
+        <div className="mt-5">
+          <p className="text-[11px] tracking-wide text-ink-soft/50">最近の遠回り</p>
+          <ul className="mt-1.5 flex flex-col gap-1">
+            {recentPosts.map((p) => (
+              <li key={p.id}>
+                <Link
+                  href={`/post/${p.id}`}
+                  className="block truncate text-[13px] text-ink-soft/80 hover:text-ink"
+                >
+                  {p.mission_text}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
 
       <div className="mt-6 flex gap-6 text-sm">
