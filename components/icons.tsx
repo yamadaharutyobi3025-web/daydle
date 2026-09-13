@@ -56,3 +56,12 @@ export function IconMap(props: SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
+
+export function IconPerson(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg {...base(props)}>
+      <circle cx="8" cy="5.3" r="2.6" />
+      <path d="M2.8 14c0-3 2.3-5 5.2-5s5.2 2 5.2 5" />
+    </svg>
+  );
+}
