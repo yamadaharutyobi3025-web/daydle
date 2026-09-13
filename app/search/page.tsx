@@ -21,17 +21,24 @@ export default function SearchPage() {
     setHasSearched(true);
     try {
       const supabase = createClient();
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, username, display_name, avatar_url")
-        .ilike("username", `%${q}%`)
-        .limit(20);
-      if (error) {
-        console.error("username search failed", error);
+      const columns = "id, username, display_name, avatar_url";
+      // usernameとdisplay_nameを別々に検索してから結合する
+      // （PostgRESTのor()フィルタ文字列に検索語をそのまま埋め込むと、
+      // 検索語に , や ) 等が含まれた際に壊れるため、この形の方が安全）。
+      const [byUsername, byDisplayName] = await Promise.all([
+        supabase.from("profiles").select(columns).ilike("username", `%${q}%`).limit(20),
+        supabase.from("profiles").select(columns).ilike("display_name", `%${q}%`).limit(20),
+      ]);
+      if (byUsername.error || byDisplayName.error) {
+        console.error("user search failed", byUsername.error, byDisplayName.error);
         setResults([]);
         return;
       }
-      setResults(data ?? []);
+      const merged = new Map<string, FollowListItem>();
+      for (const user of [...(byUsername.data ?? []), ...(byDisplayName.data ?? [])]) {
+        merged.set(user.id, user);
+      }
+      setResults(Array.from(merged.values()));
     } finally {
       setIsSearching(false);
     }
@@ -47,7 +54,7 @@ export default function SearchPage() {
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="username"
+          placeholder="usernameまたは表示名"
           className="w-full rounded-2xl border border-line/80 bg-cream px-4 py-3 text-[15px] text-ink outline-none focus:border-sage"
         />
       </form>
