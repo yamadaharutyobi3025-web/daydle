@@ -12,6 +12,7 @@ import { getHistory } from "@/lib/storage";
 import { findMissionById } from "@/lib/missionSelector";
 import { getPhoto } from "@/lib/photoStore";
 import { todayKey } from "@/lib/date";
+import { formatDurationLabel } from "@/lib/durationDisplay";
 import type { Mission } from "@/types/mission";
 
 /** 投稿専用の「ひとこと」の文字数上限。ジャーナルのNOTE_MAX_LENGTHとは別物。 */
@@ -201,7 +202,7 @@ export default function NewPostPage() {
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <span className="rounded-full bg-cream-deep/70 px-3 py-1 text-[11px] tracking-wide text-ink-soft">
-                {mission.duration} MIN
+                {formatDurationLabel(mission.duration, mission.displayDuration)}
               </span>
               <PhoneModeBadge phoneMode={mission.phoneMode} allowedTools={mission.allowedTools} />
             </div>

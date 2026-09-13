@@ -14,6 +14,7 @@ import { trackEvent } from "@/lib/track";
 import { communityMissionToMission } from "@/lib/missionSelector";
 import { SocialFeed } from "@/components/SocialFeed";
 import { RecentPosters } from "@/components/RecentPosters";
+import { formatDurationLabel } from "@/lib/durationDisplay";
 import type { CommunityMission } from "@/types/mission";
 
 export default function CommunityPage() {
@@ -66,7 +67,7 @@ export default function CommunityPage() {
               「{item.description}」
             </p>
             <div className="mt-5 flex items-center gap-2.5 text-ink-soft/45">
-              <span className="text-[10px] tracking-wide">{item.duration} MIN</span>
+              <span className="text-[10px] tracking-wide">{formatDurationLabel(item.duration)}</span>
               <span className="pointer-events-none text-[10px]">・</span>
               <PhoneModeBadge
                 phoneMode={item.phoneMode}

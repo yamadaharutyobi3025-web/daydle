@@ -7,6 +7,7 @@ import { PostCard } from "@/components/PostCard";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { dateKey, formatJapaneseDate } from "@/lib/date";
+import { formatDurationLabel } from "@/lib/durationDisplay";
 import type { AllowedTool } from "@/types/mission";
 import type { PostWithProfile } from "@/types/supabase";
 
@@ -101,7 +102,7 @@ export default async function PostDetailPage({
 
       <div className="mt-5 flex flex-wrap items-center gap-2">
         <span className="rounded-full bg-cream-deep/70 px-3 py-1 text-[11px] tracking-wide text-ink-soft">
-          {post.duration_minutes} MIN
+          {formatDurationLabel(post.duration_minutes)}
         </span>
         <PhoneModeBadge
           phoneMode={post.phone_mode}

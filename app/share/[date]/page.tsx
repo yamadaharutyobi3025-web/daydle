@@ -61,6 +61,7 @@ export default function ShareCardPage() {
           photoBlob,
           note: entry.note ?? null,
           durationMinutes: mission.duration,
+          durationDisplayTier: mission.displayDuration,
           phoneModeLabel: getPhoneModeLabel(mission.phoneMode, mission.allowedTools),
           dateKey: date,
           detourNumber: getDetourNumber(date),

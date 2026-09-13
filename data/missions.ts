@@ -78,6 +78,7 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "pointless",
     safetyNote: null,
+    displayDuration: "instant",
     frictionLevel: 0,
   },
   {
@@ -260,6 +261,7 @@ export const missions: Mission[] = [
     category: "quiet",
     safetyNote: null,
     contexts: { places: ["home"] },
+    displayDuration: "instant",
     frictionLevel: 0,
   },
   {
@@ -278,8 +280,8 @@ export const missions: Mission[] = [
   },
   {
     id: "quiet_005",
-    title: "聞こえた音を3つ数える",
-    description: "3分間で聞こえた音を、心の中で3つだけ数えてください。",
+    title: "聞こえた音を指で数える",
+    description: "3分間で聞こえた音を3つ数えて、聞こえるたびに指を1本ずつ立ててください。",
     duration: 5,
     environment: "inside",
     moods: ["quiet", "home", "outside"],
@@ -316,6 +318,7 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "quiet",
     safetyNote: null,
+    displayDuration: "instant",
     frictionLevel: 0,
   },
 
@@ -499,6 +502,7 @@ export const missions: Mission[] = [
     category: "home",
     safetyNote: null,
     contexts: { places: ["home"] },
+    displayDuration: "instant",
     frictionLevel: 0,
   },
   {
@@ -665,12 +669,13 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "people",
     safetyNote: null,
+    displayDuration: "instant",
     frictionLevel: 0,
   },
   {
     id: "people_002",
-    title: "家族の近くにありそうな物を予想する",
-    description: "家族の誰か1人について、今いちばん近くにありそうな物を勝手に予想してください。",
+    title: "家族を一言で書く",
+    description: "家族の誰か1人を思い浮かべて、その人を一言で表す言葉を紙に書いてください。",
     duration: 5,
     environment: "either",
     moods: ["people"],
@@ -683,8 +688,8 @@ export const missions: Mission[] = [
   },
   {
     id: "people_003",
-    title: "絶対に送らない一言を考える",
-    description: "誰か1人を思い浮かべて、その人には絶対に送らない一言を考えてください。送らなくて大丈夫です。",
+    title: "絶対に送らない一言を書く",
+    description: "誰か1人を思い浮かべて、その人には絶対に送らない一言を紙に書いてください。送らずに、そのまま持っていてください。",
     duration: 5,
     environment: "either",
     moods: ["people"],
@@ -753,6 +758,7 @@ export const missions: Mission[] = [
     category: "adventure",
     safetyNote: null,
     contexts: { places: ["home"] },
+    displayDuration: "instant",
     frictionLevel: 0,
   },
   {
@@ -833,8 +839,8 @@ export const missions: Mission[] = [
   // --- nostalgia ---------------------------------------------------------
   {
     id: "nostalgia_001",
-    title: "昔好きだった遊び",
-    description: "小学校の頃に好きだった遊びを1つ、頭の中で思い出してください。",
+    title: "昔好きだった遊びを少し真似る",
+    description: "小学校の頃に好きだった遊びを1つ思い出して、その動きを10秒だけ真似してください。",
     duration: 5,
     environment: "either",
     moods: ["quiet", "outside"],
@@ -892,8 +898,8 @@ export const missions: Mission[] = [
   },
   {
     id: "nostalgia_005",
-    title: "頭の中で1分だけ歩く",
-    description: "好きだった思い出の場所を、頭の中で1分間歩いてください。",
+    title: "思い出の場所を歩くつもりで10歩",
+    description: "好きだった思い出の場所を思い浮かべて、そこを歩くつもりで、今いる場所を10歩だけ歩いてください。",
     duration: 5,
     environment: "either",
     moods: ["quiet", "outside"],
@@ -979,6 +985,7 @@ export const missions: Mission[] = [
     category: "pointless",
     safetyNote: null,
     contexts: { requiresOutside: true },
+    displayDuration: "instant",
     frictionLevel: 1,
   },
   {
@@ -993,6 +1000,7 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "pointless",
     safetyNote: null,
+    displayDuration: "instant",
     frictionLevel: 0,
   },
   {
@@ -1252,8 +1260,8 @@ export const missions: Mission[] = [
   },
   {
     id: "people_008",
-    title: "一番意味不明だった言葉を思い出す",
-    description: "今日聞いた言葉の中から、いちばん意味がわからなかったものを1つ思い出してください。",
+    title: "一番意味不明だった言葉を書く",
+    description: "今日聞いた言葉の中から、いちばん意味がわからなかったものを1つ思い出して、紙に書いてください。",
     duration: 5,
     environment: "either",
     moods: ["people", "quiet"],
@@ -1266,8 +1274,8 @@ export const missions: Mission[] = [
   },
   {
     id: "people_009",
-    title: "疎遠な人の好きだった食べ物を思い出す",
-    description: "少し疎遠になった人を1人思い浮かべて、その人が好きだった食べ物を1つ思い出してください。連絡はしなくていいです。",
+    title: "疎遠な人の好きだった食べ物に似たものを探す",
+    description: "少し疎遠になった人を1人思い浮かべて、その人が好きだった食べ物に似たものを、身の回りで1つ探してみてください。見つからなくても大丈夫です。連絡はしなくていいです。",
     duration: 5,
     environment: "either",
     moods: ["people"],
@@ -1291,6 +1299,7 @@ export const missions: Mission[] = [
     category: "home",
     safetyNote: null,
     contexts: { places: ["home"] },
+    displayDuration: "instant",
     frictionLevel: 0,
   },
   {
@@ -1326,7 +1335,7 @@ export const missions: Mission[] = [
   {
     id: "people_011",
     title: "どうでもいい瞬間にタイトルをつける",
-    description: "今日のどうでもよかった瞬間に、勝手にタイトルをつけてください。",
+    description: "今日のどうでもよかった瞬間に、勝手にタイトルをつけて、紙に書いてください。",
     duration: 5,
     environment: "inside",
     moods: ["people", "quiet"],

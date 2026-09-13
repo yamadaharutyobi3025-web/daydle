@@ -3,6 +3,7 @@ import { PhoneModeBadge } from "@/components/PhoneModeBadge";
 import { Logo } from "@/components/Logo";
 import { Scenery } from "@/components/Scenery";
 import { PosterSignature } from "@/components/PosterSignature";
+import { formatDurationLabel } from "@/lib/durationDisplay";
 
 export function MissionPoster({
   mission,
@@ -29,7 +30,7 @@ export function MissionPoster({
 
       <div className="mt-8 flex flex-wrap items-center gap-2">
         <span className="rounded-full bg-cream-deep/70 px-3 py-1 text-[11px] tracking-wide text-ink-soft">
-          {mission.duration} MIN
+          {formatDurationLabel(mission.duration, mission.displayDuration)}
         </span>
         <PhoneModeBadge phoneMode={mission.phoneMode} allowedTools={mission.allowedTools} />
       </div>

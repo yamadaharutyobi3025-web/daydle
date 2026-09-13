@@ -20,6 +20,13 @@ export type Mood =
 
 export type AllowedTool = "camera" | "maps" | "call" | "message";
 
+/**
+ * 画面表示用の「体感所要時間」の目安。durationLabel参照。
+ * duration（分）とは独立した表示専用の軸で、段階解放・記録・推薦
+ * ロジックの計算には一切使わない。
+ */
+export type DurationDisplayTier = "instant" | "short" | "medium" | "slow";
+
 export type MissionCategory =
   | "walk"
   | "nature"
@@ -94,6 +101,15 @@ export interface Mission {
    * ユーザーには一切見せない内部指標。未指定は1（少し動く）相当として扱う。
    */
   frictionLevel?: 0 | 1 | 2 | 3;
+  /**
+   * 画面表示上の体感所要時間を、durationの数値による自動判定から
+   * 上書きしたい場合だけ指定する（例: 本文が「10秒だけ」等、実際の
+   * 体感がduration値と大きくズレるミッション）。未指定時は
+   * lib/durationDisplay.tsがduration（分）から自動的に4段階へ
+   * 振り分ける。durationの数値自体（段階解放・記録・推薦ロジックが
+   * 使う値）には一切影響しない。
+   */
+  displayDuration?: DurationDisplayTier;
 }
 
 export interface CommunityMission {

@@ -4,6 +4,7 @@ import { PostPhoto } from "@/components/PostPhoto";
 import { TryThisButton } from "@/components/TryThisButton";
 import { PostTriers } from "@/components/PostTriers";
 import { dateKey, formatJapaneseDate } from "@/lib/date";
+import { formatDurationLabel } from "@/lib/durationDisplay";
 import type { PostWithProfile } from "@/types/supabase";
 import type { AllowedTool } from "@/types/mission";
 
@@ -70,7 +71,7 @@ export function PostCard({ post }: { post: PostWithProfile }) {
 
       <div className="pointer-events-none mt-3 flex flex-wrap items-center gap-2">
         <span className="rounded-full bg-cream-deep/70 px-3 py-1 text-[11px] tracking-wide text-ink-soft">
-          {post.duration_minutes} MIN
+          {formatDurationLabel(post.duration_minutes)}
         </span>
         <PhoneModeBadge
           phoneMode={post.phone_mode}

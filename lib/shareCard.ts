@@ -1,4 +1,6 @@
 import { formatJapaneseDate } from "@/lib/date";
+import { formatDurationLabel } from "@/lib/durationDisplay";
+import type { DurationDisplayTier } from "@/types/mission";
 
 /**
  * SNS共有用のDAYDLE CARDを、ブラウザ内のCanvasだけで生成する。
@@ -25,6 +27,7 @@ export interface ShareCardInput {
   photoBlob: Blob | null;
   note: string | null;
   durationMinutes: number;
+  durationDisplayTier?: DurationDisplayTier | null;
   phoneModeLabel: string;
   dateKey: string;
   detourNumber: number;
@@ -218,7 +221,7 @@ export async function generateShareCard(input: ShareCardInput): Promise<Blob> {
   ctx.fillStyle = COLORS.inkSoft;
   ctx.font = `26px ${SANS_FONT}`;
   ctx.fillText(
-    `${input.durationMinutes} MIN   ${input.phoneModeLabel}`,
+    `${formatDurationLabel(input.durationMinutes, input.durationDisplayTier)}   ${input.phoneModeLabel}`,
     WIDTH / 2,
     HEIGHT - 220
   );
