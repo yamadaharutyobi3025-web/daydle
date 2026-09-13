@@ -27,7 +27,7 @@ export default async function PostDetailPage({
   const { data: post } = await supabase
     .from("posts")
     .select(
-      "id, mission_text, duration_minutes, phone_mode, allowed_tools, note, photo_path, created_at, profiles!inner(username, display_name, avatar_url)"
+      "id, mission_text, duration_minutes, phone_mode, allowed_tools, comment, photo_path, created_at, profiles!inner(username, display_name, avatar_url)"
     )
     .eq("id", id)
     .maybeSingle();
@@ -77,6 +77,10 @@ export default async function PostDetailPage({
 
       <p className="mt-8 font-serif-jp text-[20px] leading-[1.9] text-ink">{post.mission_text}</p>
 
+      {post.comment && (
+        <p className="mt-3 text-sm leading-relaxed text-ink-soft">{post.comment}</p>
+      )}
+
       <div className="mt-5 flex flex-wrap items-center gap-2">
         <span className="rounded-full bg-cream-deep/70 px-3 py-1 text-[11px] tracking-wide text-ink-soft">
           {post.duration_minutes} MIN
@@ -86,10 +90,6 @@ export default async function PostDetailPage({
           allowedTools={post.allowed_tools as AllowedTool[]}
         />
       </div>
-
-      {post.note && (
-        <p className="mt-5 text-sm leading-relaxed text-ink-soft">{post.note}</p>
-      )}
 
       {photoUrl && (
         // eslint-disable-next-line @next/next/no-img-element

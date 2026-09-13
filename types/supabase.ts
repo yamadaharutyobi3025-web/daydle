@@ -76,6 +76,8 @@ export type Database = {
           phone_mode: "offline" | "tool" | "connect";
           allowed_tools: string[];
           note: string | null;
+          /** 投稿時点で書く、投稿専用の短い感想（「やってみて、どうだった？」）。 */
+          comment: string | null;
           photo_path: string | null;
           created_at: string;
         };
@@ -87,6 +89,7 @@ export type Database = {
           phone_mode: "offline" | "tool" | "connect";
           allowed_tools?: string[];
           note?: string | null;
+          comment?: string | null;
           photo_path?: string | null;
         };
         Update: never;

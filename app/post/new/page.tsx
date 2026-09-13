@@ -14,6 +14,9 @@ import { getPhoto } from "@/lib/photoStore";
 import { todayKey } from "@/lib/date";
 import type { Mission } from "@/types/mission";
 
+/** 投稿専用の「ひとこと」の文字数上限。ジャーナルのNOTE_MAX_LENGTHとは別物。 */
+const COMMENT_MAX_LENGTH = 80;
+
 type Status =
   | "loading"
   | "need-login"
@@ -35,7 +38,7 @@ export default function NewPostPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
   const [mission, setMission] = useState<Mission | null>(null);
-  const [note, setNote] = useState<string | null>(null);
+  const [comment, setComment] = useState("");
   const [photoBlob, setPhotoBlob] = useState<Blob | null>(null);
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
 
@@ -96,7 +99,6 @@ export default function NewPostPage() {
 
       setUserId(user.id);
       setMission(m);
-      setNote(entry.note ?? null);
       setStatus("ready");
     }
 
@@ -133,7 +135,7 @@ export default function NewPostPage() {
         duration_minutes: mission.duration,
         phone_mode: mission.phoneMode,
         allowed_tools: mission.allowedTools,
-        note,
+        comment: comment.trim() || null,
         photo_path: photoPath,
       });
       if (insertError) {
@@ -203,7 +205,6 @@ export default function NewPostPage() {
               </span>
               <PhoneModeBadge phoneMode={mission.phoneMode} allowedTools={mission.allowedTools} />
             </div>
-            {note && <p className="mt-3 text-sm leading-relaxed text-ink-soft">{note}</p>}
             {photoPreviewUrl && (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -212,6 +213,21 @@ export default function NewPostPage() {
                 className="mt-3 h-48 w-full rounded-2xl object-cover"
               />
             )}
+          </div>
+
+          <div>
+            <label className="text-[13px] text-ink-soft">やってみて、どうだった？</label>
+            <textarea
+              value={comment}
+              onChange={(e) => setComment(e.target.value.slice(0, COMMENT_MAX_LENGTH))}
+              maxLength={COMMENT_MAX_LENGTH}
+              rows={2}
+              placeholder="思ったより風の音が聞こえた。"
+              className="mt-1.5 w-full resize-none rounded-2xl bg-cream-deep/40 px-4 py-3 text-sm leading-relaxed text-ink placeholder:text-ink-soft/50 focus:outline-none"
+            />
+            <p className="mt-1 text-right text-[11px] text-ink-soft/50">
+              {comment.length} / {COMMENT_MAX_LENGTH}
+            </p>
           </div>
 
           <p className="text-[11px] leading-relaxed text-ink-soft/60">

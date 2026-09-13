@@ -18,7 +18,7 @@ type FeedResult = {
 };
 
 const POST_COLUMNS =
-  "id, user_id, mission_text, duration_minutes, phone_mode, allowed_tools, note, photo_path, created_at";
+  "id, user_id, mission_text, duration_minutes, phone_mode, allowed_tools, comment, photo_path, created_at";
 
 /**
  * 「みんな」画面の下に追加する、Supabaseの投稿フィード。

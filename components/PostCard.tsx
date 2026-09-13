@@ -60,6 +60,12 @@ export function PostCard({ post }: { post: PostWithProfile }) {
         {post.mission_text}
       </p>
 
+      {post.comment && (
+        <p className="pointer-events-none mt-2 text-sm leading-relaxed text-ink-soft">
+          {post.comment}
+        </p>
+      )}
+
       <div className="pointer-events-none mt-3 flex flex-wrap items-center gap-2">
         <span className="rounded-full bg-cream-deep/70 px-3 py-1 text-[11px] tracking-wide text-ink-soft">
           {post.duration_minutes} MIN
@@ -69,12 +75,6 @@ export function PostCard({ post }: { post: PostWithProfile }) {
           allowedTools={post.allowed_tools as AllowedTool[]}
         />
       </div>
-
-      {post.note && (
-        <p className="pointer-events-none mt-3 text-sm leading-relaxed text-ink-soft">
-          {post.note}
-        </p>
-      )}
 
       {post.photo_path && (
         <div className="pointer-events-none">
