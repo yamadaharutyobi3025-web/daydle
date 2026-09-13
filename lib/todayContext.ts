@@ -57,3 +57,17 @@ export function saveTodayFeeling(feeling: Feeling): void {
   const current = load();
   save({ date: todayKey(), situation: current?.situation ?? null, feeling });
 }
+
+/**
+ * 開発環境専用。今日の状況・気分の途中経過（このキーだけ）を消す。
+ * 呼び出し元（lib/storage.tsのresetTodayForDevTesting）でNODE_ENVを
+ * 確認済みの前提だが、単体で誤って呼ばれても実害はキー1つの削除のみ。
+ */
+export function clearTodayContext(): void {
+  if (!isBrowser()) return;
+  try {
+    window.localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // 削除に失敗しても致命的ではない
+  }
+}

@@ -229,6 +229,31 @@ export function clearTodayMission(): void {
   saveState(state);
 }
 
+/**
+ * 開発環境専用。今日のtodayMission（situation/feeling/missionIdは
+ * lib/todayContext.ts側でクリア）と、今日分の履歴（完了状態）だけを
+ * この端末上でリセットし、WelcomeFlowの2問から再テストできるようにする。
+ *
+ * 1日1遠回りの判定ロジック自体（hasCompletedToday()の実装）は変更せず、
+ * その判定材料となるローカルデータだけを今日分に限って消す。過去の履歴
+ * （他の日付）やSupabase上のpost/follow/notification/daily_completions
+ * には一切触れない（daily_completionsへの書き込みはlib/socialSync.tsの
+ * upsertのみで、読み取って今日の開始可否を判定する経路はこのアプリには
+ * 存在しないため、ここでの操作はSupabase側と無関係）。
+ *
+ * 呼び出し側（components/DevResetTodayButton.tsx）は/dev-login
+ * （NODE_ENV!=="development"ならページごと404）からのみ表示するが、
+ * 念のためここでも本番ビルドでは何もしないようにしておく。
+ */
+export function resetTodayForDevTesting(): void {
+  if (process.env.NODE_ENV !== "development") return;
+  const key = todayKey();
+  const state = loadState();
+  state.today = null;
+  state.history = state.history.filter((h) => h.date !== key);
+  saveState(state);
+}
+
 export function updateTodayMission(
   updater: (current: TodayMissionState) => TodayMissionState
 ): TodayMissionState | null {
