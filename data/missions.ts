@@ -68,8 +68,8 @@ export const missions: Mission[] = [
   },
   {
     id: "walk_005",
-    title: "今日の場所を決める",
-    description: "床の1点だけを「今日の場所」と決めてください。以上。",
+    title: "今日の印を決める",
+    description: "足元に見える線や模様を1つだけ、「今日の印」と決めてください。以上。",
     duration: 5,
     environment: "either",
     moods: ["empty"],
@@ -308,8 +308,8 @@ export const missions: Mission[] = [
   },
   {
     id: "quiet_011",
-    title: "目に入ったものを3つ見る",
-    description: "今、目に入ったものを3つだけ、順番に見てください。",
+    title: "同じ色を3つ探す",
+    description: "今見えるものの中から、同じ色のものを3つ探してください。",
     duration: 5,
     environment: "either",
     moods: ["quiet", "empty", "outside"],
@@ -763,8 +763,8 @@ export const missions: Mission[] = [
   },
   {
     id: "adventure_002",
-    title: "いつもと違う出入り口を使う",
-    description: "今いる場所から、いつもと違う出入り口を1つ使ってください。",
+    title: "いつも見ない方向を見る",
+    description: "いつも見ない方向を、10秒だけ見てください。",
     duration: 5,
     environment: "either",
     moods: ["adventure", "outside"],

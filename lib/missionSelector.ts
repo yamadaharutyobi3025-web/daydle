@@ -415,6 +415,19 @@ function feelingAffinity(mission: Mission, feeling: Feeling, situation: Situatio
 }
 
 /**
+ * transit（移動中）限定のID指定ハード除外。requiresOutside等の既存
+ * contextsフラグでは捉えられない「持ち物前提」「特定設備前提」
+ * 「ウェルネス表現が強い」を、transit実行可能性監査で個別に特定した
+ * 4件だけに適用する。他の状況（home/outside/work_school/unsure）では
+ * このSetを一切参照しないため、従来通り候補になりうる。
+ * - quiet_001: 「飲み物」の所持を前提にしている
+ * - quiet_004: 音楽を聴く手段を前提にしている
+ * - book_004: 「何も考えなくて大丈夫です」というウェルネス表現が強い
+ * - food_002: 「今日食べるもの」が今この場にない前提
+ */
+const TRANSIT_EXCLUDED_IDS = new Set(["quiet_001", "quiet_004", "book_004", "food_002"]);
+
+/**
  * 物理的に不可能な組み合わせだけを除外する（既存のisContextFeasibleと
  * 同じハード制約）。
  *
@@ -439,6 +452,7 @@ function feelingAffinity(mission: Mission, feeling: Feeling, situation: Situatio
  * 系のミッションのほとんどが自動的に除外される。
  */
 function isPhysicallyFeasibleForSituation(mission: Mission, situation: Situation): boolean {
+  if (situation === "transit" && TRANSIT_EXCLUDED_IDS.has(mission.id)) return false;
   const c = mission.contexts;
   if (!c || situation === "unsure") return true;
   if (c.requiresOutside && situation !== "outside") return false;
