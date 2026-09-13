@@ -27,13 +27,22 @@ export default function CompletePage() {
         <PosterSignature className="mt-6" />
       </div>
 
-      <Link
-        href="/record"
-        className="relative z-10 mt-16 touch-manipulation text-xs text-ink-soft/60"
-      >
-        <span className="absolute -inset-3" aria-hidden="true" />
-        記録を見る
-      </Link>
+      <div className="mt-16 flex items-center gap-6">
+        <Link
+          href="/record"
+          className="relative z-10 touch-manipulation text-xs text-ink-soft/60"
+        >
+          <span className="absolute -inset-3" aria-hidden="true" />
+          記録を見る
+        </Link>
+        <Link
+          href="/post/new"
+          className="relative z-10 touch-manipulation text-xs text-ink-soft/60"
+        >
+          <span className="absolute -inset-3" aria-hidden="true" />
+          投稿する
+        </Link>
+      </div>
     </main>
   );
 }

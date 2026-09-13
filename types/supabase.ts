@@ -67,6 +67,39 @@ export type Database = {
         };
         Relationships: [];
       };
+      posts: {
+        Row: {
+          id: string;
+          user_id: string;
+          mission_text: string;
+          duration_minutes: number;
+          phone_mode: "offline" | "tool" | "connect";
+          allowed_tools: string[];
+          note: string | null;
+          photo_path: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          mission_text: string;
+          duration_minutes: number;
+          phone_mode: "offline" | "tool" | "connect";
+          allowed_tools?: string[];
+          note?: string | null;
+          photo_path?: string | null;
+        };
+        Update: never;
+        Relationships: [
+          {
+            foreignKeyName: "posts_user_id_profiles_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -95,4 +128,12 @@ export type FollowListItem = {
   username: string;
   display_name: string | null;
   avatar_url: string | null;
+};
+
+export type PostWithProfile = Database["public"]["Tables"]["posts"]["Row"] & {
+  profiles: {
+    username: string;
+    display_name: string | null;
+    avatar_url: string | null;
+  };
 };

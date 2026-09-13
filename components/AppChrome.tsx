@@ -5,7 +5,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { SocialSync } from "@/components/SocialSync";
 import { ProfileIconButton } from "@/components/ProfileIconButton";
 
-const immersive = ["/card", "/complete", "/timer", "/journal", "/share"];
+const immersive = ["/card", "/complete", "/timer", "/journal", "/share", "/post"];
 // ここは既にアカウント導線がある（または導線そのものである）画面なので、
 // 右上のプロフィールアイコンは重ねて出さない。
 const hideProfileIconOn = [...immersive, "/login", "/account", "/search", "/u"];

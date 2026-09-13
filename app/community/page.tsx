@@ -12,6 +12,7 @@ import { hasCompletedToday, setTodayMission } from "@/lib/storage";
 import { useClientSnapshot, UNLOADED } from "@/lib/useClientSnapshot";
 import { trackEvent } from "@/lib/track";
 import { communityMissionToMission } from "@/lib/missionSelector";
+import { SocialFeed } from "@/components/SocialFeed";
 import type { CommunityMission } from "@/types/mission";
 
 export default function CommunityPage() {
@@ -104,6 +105,8 @@ export default function CommunityPage() {
           <Button onClick={() => router.push("/")}>今日の遠回りをもらう</Button>
         </div>
       )}
+
+      <SocialFeed />
     </main>
   );
 }
