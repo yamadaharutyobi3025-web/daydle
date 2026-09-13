@@ -264,21 +264,66 @@ export function findMissionById(id: string): Mission | undefined {
 /** 場所を選ばず応用しやすいカテゴリ（屋内前提のミッションでも外出中の一部シーンに広げる）。 */
 const FLEXIBLE_CATEGORIES: MissionCategory[] = ["quiet", "home", "pointless", "nostalgia", "book"];
 
-function deriveSituations(mission: Mission): Situation[] {
-  const c = mission.contexts;
-  if (c?.requiresOutside) return ["outside", "transit"];
-  if (c?.requiresTravel) return ["transit"];
-  if (c?.requiresOtherPeopleNearby) return ["outside", "work_school"];
+/** 「外にいる」ことを積極的に使うカテゴリ（environmentが"either"でも外出寄りとして扱う）。 */
+const OUTSIDE_LEANING_CATEGORIES: MissionCategory[] = ["walk", "nature", "adventure"];
 
-  if (mission.environment === "outside") return ["outside", "transit"];
-  if (mission.environment === "inside") {
-    if (FLEXIBLE_CATEGORIES.includes(mission.category)) {
-      return ["home", "outside", "work_school"];
-    }
-    return ["home", "work_school"];
+/**
+ * 状況ごとの「合いやすさ」を0〜3の目安で採点する。0でも除外はしない
+ * （明確に矛盾するものだけisPhysicallyFeasibleForSituationで除外する）。
+ * 内部の優先度づけにのみ使う数値で、ユーザーには一切見せない。
+ *
+ * - 外にいる: 外にいることを積極的に使うものを優先（requiresOutside /
+ *   environment==="outside" > walk・nature・adventure系 > either > inside）
+ * - 移動中: 今の移動を大きく中断しないものを優先。frictionLevel
+ *   （0=その場ですぐ／1=少し動く／2=準備・移動が必要／3=明確な行動変更が必要）
+ *   をそのまま使う。明示的に移動が必要（requiresTravel）や、家の物を前提に
+ *   する（category==="home"）ものは低く扱う。
+ * - 仕事・学校の合間: 5〜10分・frictionLevel低め（その場で完結）を強く優先。
+ * - 家にいる: 家の中の物や空間を使うもの（category==="home"）を最優先し、
+ *   次点でenvironment==="inside"全般。
+ * - 特に決まっていない: 状況では絞り込まず、気分適合だけに委ねる。
+ */
+function situationAffinity(mission: Mission, situation: Situation): number {
+  if (situation === "unsure") return 1;
+
+  const c = mission.contexts;
+  const friction = mission.frictionLevel ?? 1;
+
+  switch (situation) {
+    case "outside":
+      if (c?.requiresOutside || mission.environment === "outside") return 3;
+      if (OUTSIDE_LEANING_CATEGORIES.includes(mission.category)) return 2;
+      if (mission.environment === "either") return 1;
+      return 0; // environment === "inside"
+
+    case "transit":
+      if (c?.requiresTravel || mission.category === "home") return 0;
+      if (mission.environment === "inside" && !FLEXIBLE_CATEGORIES.includes(mission.category)) {
+        return 0;
+      }
+      // friction0/1はどちらも「今の移動をほぼ妨げない」として同格に扱う。
+      // ここを0と1で分けると、気分に合うoutside系ミッション（frictionLevel1が
+      // 大半）が上位互換のfriction0ミッションに常に押し負けてしまい、
+      // 「状況は完璧だが気分を無視した1件」に固定化されやすくなるため。
+      if (friction <= 1) return 3;
+      if (friction === 2) return 1;
+      return 0;
+
+    case "work_school":
+      if (c?.requiresTravel || friction >= 2) return 0;
+      if (mission.duration <= 10) return 3;
+      if (mission.duration <= 15) return 1;
+      return 0;
+
+    case "home":
+      if (mission.category === "home") return 3;
+      if (mission.environment === "inside") return 2;
+      if (mission.environment === "either") return 1;
+      return 0; // environment === "outside"
+
+    default:
+      return 1;
   }
-  // environment === "either": 場所を選ばない。
-  return ["home", "outside", "transit", "work_school"];
 }
 
 const MOOD_TO_FEELINGS: Record<Mood, Feeling[]> = {
@@ -331,31 +376,41 @@ function pickFewForContext(candidates: Mission[]): string[] {
 
 /**
  * 状況・気分から今日の候補（最大3件、[0]が提示する1件）を選ぶ。
- * フォールバック順序: 状況+気分の両方一致 → 状況のみ一致 → 気分のみ一致 → 全ミッション。
- * どの段階でも、物理的に不可能な組み合わせは除外したままにする。
+ *
+ * 優先順位は「状況適合 > 気分適合 > 直近との重複回避」。
+ * situationAffinityで状況スコア（0〜3、高いほど合う）を採点し、スコアの
+ * 高い側から順に「その水準以上 かつ 気分も一致」する候補を探し、無ければ
+ * 気分は問わず同じ水準の候補を探す。それでも無ければ状況スコアの水準を
+ * 一段階だけ緩める、を繰り返す。状況を気分より先に緩めることは
+ * しない＝状況適合を気分適合より優先したまま候補が0件になるのを防ぐ。
+ * 重複回避（直近の未出現優先）と最終的なランダム性はpickFewForContext側。
+ *
+ * どの段階でも物理的に不可能な組み合わせ（isPhysicallyFeasibleForSituation）
+ * は除外したまま。同じ状況・気分でも候補プールが複数件残るように
+ * scoreは粗め（0〜3の4段階）にとどめ、厳しくしすぎて毎回同じ1件に
+ * 収束しないようにしている。
  */
 export function selectByStateAndFeeling(situation: Situation, feeling: Feeling): string[] {
   const feasiblePool = missions.filter((m) => isPhysicallyFeasibleForSituation(m, situation));
   const pool = feasiblePool.length > 0 ? feasiblePool : missions;
 
-  const tagged = pool.map((m) => ({
+  const scored = pool.map((m) => ({
     mission: m,
-    situations: deriveSituations(m),
-    feelings: deriveFeelings(m),
+    situationScore: situationAffinity(m, situation),
+    feelingMatch: deriveFeelings(m).includes(feeling),
   }));
 
-  const matchesSituation = (t: { situations: Situation[] }) =>
-    situation === "unsure" || t.situations.includes(situation);
-  const matchesFeeling = (t: { feelings: Feeling[] }) => t.feelings.includes(feeling);
+  const situationThresholds = Array.from(new Set(scored.map((s) => s.situationScore))).sort(
+    (a, b) => b - a
+  );
 
-  const both = tagged.filter((t) => matchesSituation(t) && matchesFeeling(t));
-  if (both.length > 0) return pickFewForContext(both.map((t) => t.mission));
+  for (const threshold of situationThresholds) {
+    const withFeeling = scored.filter((s) => s.situationScore >= threshold && s.feelingMatch);
+    if (withFeeling.length > 0) return pickFewForContext(withFeeling.map((s) => s.mission));
 
-  const situationOnly = tagged.filter(matchesSituation);
-  if (situationOnly.length > 0) return pickFewForContext(situationOnly.map((t) => t.mission));
-
-  const feelingOnly = tagged.filter(matchesFeeling);
-  if (feelingOnly.length > 0) return pickFewForContext(feelingOnly.map((t) => t.mission));
+    const withoutFeeling = scored.filter((s) => s.situationScore >= threshold);
+    if (withoutFeeling.length > 0) return pickFewForContext(withoutFeeling.map((s) => s.mission));
+  }
 
   return pickFewForContext(pool);
 }
