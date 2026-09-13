@@ -1,9 +1,10 @@
 import { missions } from "@/data/missions";
 import { communityMissions } from "@/data/community";
-import type { Mission, Mood, CommunityMission } from "@/types/mission";
-import type { PlaceContext, SchedulePressure, SocialContext } from "@/types/context";
+import type { Mission, Mood, MissionCategory, CommunityMission } from "@/types/mission";
+import type { PlaceContext, SchedulePressure, SocialContext, Situation, Feeling } from "@/types/context";
 import { getRecentMissionIds, getCompletedCount } from "@/lib/storage";
 import { getImportedMission } from "@/lib/socialMissions";
+import { getUnlockedMinutes } from "@/lib/unlocks";
 
 export interface SelectionInput {
   minutes: number;
@@ -248,4 +249,113 @@ export function findMissionById(id: string): Mission | undefined {
   if (community) return communityMissionToMission(community);
   // 「私もやってみる」で他人の投稿から採用したミッション（lib/socialMissions.ts）。
   return getImportedMission(id);
+}
+
+// ============================================================================
+// Context Engine v2: 「今、どんな状況？」「今、どんな気分？」の2問だけで
+// 今日の遠回りを1つ決める、新しいWelcomeFlowの入り口。
+//
+// data/missions.ts 自体は変更しない。既存のMission.moods / Mission.contexts /
+// Mission.environment / Mission.category から、状況(Situation)・気分(Feeling)
+// との相性をその場で導出するだけの、単純なタグ付けにとどめる
+// （AIによる推薦ではない）。
+// ============================================================================
+
+/** 場所を選ばず応用しやすいカテゴリ（屋内前提のミッションでも外出中の一部シーンに広げる）。 */
+const FLEXIBLE_CATEGORIES: MissionCategory[] = ["quiet", "home", "pointless", "nostalgia", "book"];
+
+function deriveSituations(mission: Mission): Situation[] {
+  const c = mission.contexts;
+  if (c?.requiresOutside) return ["outside", "transit"];
+  if (c?.requiresTravel) return ["transit"];
+  if (c?.requiresOtherPeopleNearby) return ["outside", "work_school"];
+
+  if (mission.environment === "outside") return ["outside", "transit"];
+  if (mission.environment === "inside") {
+    if (FLEXIBLE_CATEGORIES.includes(mission.category)) {
+      return ["home", "outside", "work_school"];
+    }
+    return ["home", "work_school"];
+  }
+  // environment === "either": 場所を選ばない。
+  return ["home", "outside", "transit", "work_school"];
+}
+
+const MOOD_TO_FEELINGS: Record<Mood, Feeling[]> = {
+  quiet: ["calm_seeking", "neutral"],
+  adventure: ["want_to_do_something", "good_mood"],
+  outside: ["bored", "want_to_do_something", "good_mood"],
+  home: ["tired", "calm_seeking"],
+  people: ["good_mood", "want_to_do_something"],
+  empty: ["tired", "calm_seeking", "neutral"],
+};
+
+function deriveFeelings(mission: Mission): Feeling[] {
+  const set = new Set<Feeling>();
+  for (const mood of mission.moods) {
+    for (const feeling of MOOD_TO_FEELINGS[mood]) set.add(feeling);
+  }
+  if (set.size === 0) set.add("neutral");
+  return Array.from(set);
+}
+
+/**
+ * 物理的に不可能な組み合わせだけを除外する（既存のisContextFeasibleと
+ * 同じハード制約。Mission.contexts.placesによる厳密な絞り込みはここでは
+ * 使わない＝状況タグの方はやや緩めに扱う）。
+ */
+function isPhysicallyFeasibleForSituation(mission: Mission, situation: Situation): boolean {
+  const c = mission.contexts;
+  if (!c || situation === "unsure") return true;
+  if (c.requiresOutside && situation !== "outside" && situation !== "transit") return false;
+  if (c.requiresOtherPeopleNearby && situation === "home") return false;
+  if (c.requiresTravel && situation === "home") return false;
+  return true;
+}
+
+/** 解放済みの時間・直近未出現を優先しつつ、候補を最大3件にする。 */
+function pickFewForContext(candidates: Mission[]): string[] {
+  if (candidates.length === 0) return [];
+  const completedCount = getCompletedCount();
+  const unlockedMinutes = new Set(getUnlockedMinutes(completedCount));
+  const recentIds = new Set(getRecentMissionIds());
+
+  const withinUnlocked = candidates.filter((m) => unlockedMinutes.has(m.duration));
+  const pool = withinUnlocked.length > 0 ? withinUnlocked : candidates;
+
+  const notRecent = pool.filter((m) => !recentIds.has(m.id));
+  const finalPool = notRecent.length > 0 ? notRecent : pool;
+
+  return shuffle(finalPool).slice(0, 3).map((m) => m.id);
+}
+
+/**
+ * 状況・気分から今日の候補（最大3件、[0]が提示する1件）を選ぶ。
+ * フォールバック順序: 状況+気分の両方一致 → 状況のみ一致 → 気分のみ一致 → 全ミッション。
+ * どの段階でも、物理的に不可能な組み合わせは除外したままにする。
+ */
+export function selectByStateAndFeeling(situation: Situation, feeling: Feeling): string[] {
+  const feasiblePool = missions.filter((m) => isPhysicallyFeasibleForSituation(m, situation));
+  const pool = feasiblePool.length > 0 ? feasiblePool : missions;
+
+  const tagged = pool.map((m) => ({
+    mission: m,
+    situations: deriveSituations(m),
+    feelings: deriveFeelings(m),
+  }));
+
+  const matchesSituation = (t: { situations: Situation[] }) =>
+    situation === "unsure" || t.situations.includes(situation);
+  const matchesFeeling = (t: { feelings: Feeling[] }) => t.feelings.includes(feeling);
+
+  const both = tagged.filter((t) => matchesSituation(t) && matchesFeeling(t));
+  if (both.length > 0) return pickFewForContext(both.map((t) => t.mission));
+
+  const situationOnly = tagged.filter(matchesSituation);
+  if (situationOnly.length > 0) return pickFewForContext(situationOnly.map((t) => t.mission));
+
+  const feelingOnly = tagged.filter(matchesFeeling);
+  if (feelingOnly.length > 0) return pickFewForContext(feelingOnly.map((t) => t.mission));
+
+  return pickFewForContext(pool);
 }
