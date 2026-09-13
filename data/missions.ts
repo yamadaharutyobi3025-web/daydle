@@ -674,8 +674,8 @@ export const missions: Mission[] = [
   },
   {
     id: "people_002",
-    title: "家族を一言で書く",
-    description: "家族の誰か1人を思い浮かべて、その人を一言で表す言葉を紙に書いてください。",
+    title: "家族に似ているものを探す",
+    description: "家族の誰か1人を思い浮かべて、その人に一番似ていると思うものを、今いる場所で1つ探してください。",
     duration: 5,
     environment: "either",
     moods: ["people"],
@@ -839,8 +839,8 @@ export const missions: Mission[] = [
   // --- nostalgia ---------------------------------------------------------
   {
     id: "nostalgia_001",
-    title: "昔好きだった遊びを少し真似る",
-    description: "小学校の頃に好きだった遊びを1つ思い出して、その動きを10秒だけ真似してください。",
+    title: "昔好きだった遊びを指先で真似る",
+    description: "小学校の頃に好きだった遊びを1つ思い出して、その動きの一部を、指先だけで小さく真似してください。",
     duration: 5,
     environment: "either",
     moods: ["quiet", "outside"],
@@ -1095,8 +1095,8 @@ export const missions: Mission[] = [
   },
   {
     id: "book_006",
-    title: "下から3行だけ読む",
-    description: "本を1冊、適当なページで開いてください。いちばん下の3行だけ読んでください。",
+    title: "近くの文字から1文字選ぶ",
+    description: "近くにある文字（書類・画面・貼り紙など）から、一番好きな1文字を選んでください。",
     duration: 5,
     environment: "inside",
     moods: ["quiet", "home"],
@@ -1105,6 +1105,7 @@ export const missions: Mission[] = [
     costLevel: 0,
     category: "book",
     safetyNote: null,
+    completionCategory: "observe",
     frictionLevel: 0,
   },
   {
@@ -1231,8 +1232,8 @@ export const missions: Mission[] = [
   // --- 時間×気分のすべての組み合わせを補うための追加分 ---------------------
   {
     id: "adventure_008",
-    title: "外へ出て5歩だけ進む",
-    description: "外に出て、思いついた方向へ5歩だけ進んでください。",
+    title: "5歩先で近くの物に名前をつける",
+    description: "外に出て、5歩だけ進んだら、その場でいちばん近くにある物に、勝手な名前をつけてください。",
     duration: 5,
     environment: "outside",
     moods: ["adventure", "outside"],
@@ -1246,8 +1247,8 @@ export const missions: Mission[] = [
   },
   {
     id: "quiet_008",
-    title: "時計を見ずに過ごす",
-    description: "15分間、時計を見ずに過ごしてください。",
+    title: "時計以外で時間を探す",
+    description: "今、目に入るものの中から、時計以外で時間の経過が分かりそうなものを1つ探してください。",
     duration: 15,
     environment: "either",
     moods: ["empty", "quiet"],
@@ -1288,8 +1289,8 @@ export const missions: Mission[] = [
   },
   {
     id: "home_009",
-    title: "家で一番静かな場所へ行く",
-    description: "家の中で一番静かだと思う場所に、30秒だけ移動してください。",
+    title: "違う角度から部屋を見渡す",
+    description: "家の中で一番静かだと思う場所へ行って、いつもと違う角度から部屋を1回だけ見渡してください。",
     duration: 5,
     environment: "inside",
     moods: ["home", "quiet"],
