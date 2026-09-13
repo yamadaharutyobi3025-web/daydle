@@ -1,11 +1,22 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { PhoneModeBadge } from "@/components/PhoneModeBadge";
 import { PostPhoto } from "@/components/PostPhoto";
 import { dateKey, formatJapaneseDate } from "@/lib/date";
 import type { PostWithProfile } from "@/types/supabase";
 import type { AllowedTool } from "@/types/mission";
 
+/**
+ * カード全体がクリック可能（/post/[id]の詳細へ）。
+ * 中のプロフィール部分だけは別の行き先（/u/[username]）を持つ実在の
+ * <Link>なので、そのクリックはstopPropagationしてカード側の遷移と
+ * 競合しないようにしている（<a>の中に<a>を入れるのは無効なHTMLになる
+ * ため、外側はdiv+onClick、内側だけ本物のLinkにしている）。
+ */
 export function PostCard({ post }: { post: PostWithProfile }) {
+  const router = useRouter();
   const createdAt = new Date(post.created_at);
   const dateLabel = formatJapaneseDate(dateKey(createdAt));
   const timeLabel = createdAt.toLocaleTimeString("ja-JP", {
@@ -13,9 +24,28 @@ export function PostCard({ post }: { post: PostWithProfile }) {
     minute: "2-digit",
   });
 
+  function goToDetail() {
+    router.push(`/post/${post.id}`);
+  }
+
   return (
-    <li className="rounded-2xl bg-cream-deep/30 p-5">
-      <Link href={`/u/${post.profiles.username}`} className="flex items-center gap-3">
+    <li
+      role="link"
+      tabIndex={0}
+      onClick={goToDetail}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          goToDetail();
+        }
+      }}
+      className="touch-manipulation cursor-pointer rounded-2xl bg-cream-deep/30 p-5"
+    >
+      <Link
+        href={`/u/${post.profiles.username}`}
+        onClick={(e) => e.stopPropagation()}
+        className="relative z-10 flex items-center gap-3"
+      >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={post.profiles.avatar_url || "/icon-192"}
