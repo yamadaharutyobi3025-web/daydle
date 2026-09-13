@@ -462,6 +462,81 @@ function isPhysicallyFeasibleForSituation(mission: Mission, situation: Situation
   return true;
 }
 
+type ScoredMission = { mission: Mission; situationScore: number; feelingScore: number };
+
+/** transit限定のカテゴリ多様性調整で使うウィンドウ幅・上限・許容スコア差。 */
+const TRANSIT_DIVERSITY_WINDOW = 5;
+const TRANSIT_DIVERSITY_CATEGORY_CAP = 2;
+const TRANSIT_DIVERSITY_MAX_GAP = 1;
+
+/**
+ * transit（移動中）限定：候補の採点（situationAffinity・feelingAffinity）
+ * 自体は一切変更せず、Top候補を「どの順で採用するか」だけを調整して
+ * カテゴリの偏り（quietカテゴリの独占）を抑える。
+ *
+ * 手順：
+ * 1. situationScore*2 + feelingScoreを合成スコアとして降順に並べる
+ *    （状況適合を気分適合より重く見る、というselectByStateAndFeeling
+ *    本体のカスケード優先度をそのまま踏襲しただけで、新しい採点軸では
+ *    ない）。
+ * 2. 上位からTRANSIT_DIVERSITY_WINDOW件（Top5）を、同一categoryが
+ *    TRANSIT_DIVERSITY_CATEGORY_CAP件（2件）を超えて入らないように
+ *    採用していく。
+ * 3. 3件目以降の同一category候補を採用しようとした場面でだけ、まだ
+ *    未採用の別category候補（合成スコアが最も高いもの＝次点）を見て、
+ *    その差がTRANSIT_DIVERSITY_MAX_GAP（1）以内なら別categoryを先に
+ *    採用する。差がそれより大きい場合や、別categoryの候補がもう無い
+ *    場合は、無理に繰り上げず元の同一category候補をそのまま採用する
+ *    （ミッションを削除・除外するわけではなく、あくまで採用順の調整）。
+ *
+ * このTop5（window）だけを後段のpickFewForContextに渡す。
+ * pickFewForContextは受け取ったプールをシャッフルして3件選ぶだけなので、
+ * ここでTop5に絞り込まずに元の全候補プールをそのまま渡してしまうと、
+ * 母集団の大半を占めるquiet系候補が結局シャッフルで選ばれやすいままになり、
+ * カテゴリ上限の意味が無くなる。Top5に絞ることで初めて、実際に表示される
+ * 3件もカテゴリ多様性の恩恵を受ける。
+ */
+function diversifyForTransit(scored: ScoredMission[]): Mission[] {
+  const combinedScore = (s: ScoredMission) => s.situationScore * 2 + s.feelingScore;
+  const remaining = [...scored].sort((a, b) => combinedScore(b) - combinedScore(a));
+
+  const window: ScoredMission[] = [];
+  const categoryCounts = new Map<MissionCategory, number>();
+
+  while (remaining.length > 0 && window.length < TRANSIT_DIVERSITY_WINDOW) {
+    const candidate = remaining[0];
+    const category = candidate.mission.category;
+    const count = categoryCounts.get(category) ?? 0;
+
+    if (count < TRANSIT_DIVERSITY_CATEGORY_CAP) {
+      window.push(candidate);
+      categoryCounts.set(category, count + 1);
+      remaining.shift();
+      continue;
+    }
+
+    const altIndex = remaining.findIndex(
+      (c) =>
+        c.mission.category !== category &&
+        (categoryCounts.get(c.mission.category) ?? 0) < TRANSIT_DIVERSITY_CATEGORY_CAP
+    );
+    const alt = altIndex >= 0 ? remaining[altIndex] : null;
+    const gap = alt ? combinedScore(candidate) - combinedScore(alt) : Infinity;
+
+    if (alt && gap <= TRANSIT_DIVERSITY_MAX_GAP) {
+      window.push(alt);
+      categoryCounts.set(alt.mission.category, (categoryCounts.get(alt.mission.category) ?? 0) + 1);
+      remaining.splice(altIndex, 1);
+    } else {
+      window.push(candidate);
+      categoryCounts.set(category, count + 1);
+      remaining.shift();
+    }
+  }
+
+  return window.map((s) => s.mission);
+}
+
 /** 解放済みの時間・直近未出現を優先しつつ、候補を最大3件にする。 */
 function pickFewForContext(candidates: Mission[]): string[] {
   if (candidates.length === 0) return [];
@@ -515,15 +590,21 @@ export function selectByStateAndFeeling(situation: Situation, feeling: Feeling):
     (a, b) => b - a
   );
 
+  // transitのみ、確定した候補リストに対してカテゴリ多様性調整をかけてから
+  // pickFewForContextへ渡す。他の状況はconditionが常にfalseになるだけで、
+  // 挙動は従来のpickFewForContext(candidates)と完全に同じ。
+  const finalize = (candidates: ScoredMission[]): string[] =>
+    pickFewForContext(situation === "transit" ? diversifyForTransit(candidates) : candidates.map((s) => s.mission));
+
   for (const threshold of situationThresholds) {
     const inTier = scored.filter((s) => s.situationScore >= threshold);
     if (inTier.length === 0) continue;
 
     const bestFeeling = inTier.filter((s) => s.feelingScore === 2);
-    if (bestFeeling.length > 0) return pickFewForContext(bestFeeling.map((s) => s.mission));
+    if (bestFeeling.length > 0) return finalize(bestFeeling);
 
     const anyFeeling = inTier.filter((s) => s.feelingScore >= 1);
-    if (anyFeeling.length > 0) return pickFewForContext(anyFeeling.map((s) => s.mission));
+    if (anyFeeling.length > 0) return finalize(anyFeeling);
 
     // この状況水準には気分に合う候補が1件も無い。状況水準をもう一段階
     // 緩めて（＝situationThresholdsの次のより低い値へ）気分一致を探す。
@@ -532,5 +613,5 @@ export function selectByStateAndFeeling(situation: Situation, feeling: Feeling):
   // 状況水準をどこまで緩めても気分一致が無かった場合のみ、気分を諦めて
   // 最上位の状況水準を返す。
   const topTier = scored.filter((s) => s.situationScore >= situationThresholds[0]);
-  return pickFewForContext(topTier.map((s) => s.mission));
+  return finalize(topTier);
 }
