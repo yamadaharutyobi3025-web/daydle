@@ -27,8 +27,9 @@ export default function DevLoginPage() {
         開発用ログイン
       </h1>
       <p className="mt-4 text-sm leading-[1.9] text-ink-soft">
-        開発環境専用です。あらかじめパスワードを設定したテストアカウントで、
-        メール送信なしにログインできます。本番では使えません。
+        開発環境専用です。既存アカウントのusernameを入力するだけで、
+        メール送信なしにログインできます（サーバー側でその場限りの
+        パスワードを発行します）。本番では使えません。
       </p>
 
       {!isSupabaseConfigured() ? (
