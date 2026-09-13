@@ -18,6 +18,7 @@ import { trackEvent } from "@/lib/track";
 import { primeAudio } from "@/lib/timerAlert";
 import { postIdFromMissionId } from "@/lib/socialMissions";
 import { recordPostTryCompletion } from "@/lib/postTries";
+import { DevMissionRatingWidget } from "@/components/DevMissionRatingWidget";
 
 export function TodayScreen({
   initial,
@@ -195,6 +196,10 @@ export function TodayScreen({
           </p>
         )}
       </div>
+
+      {process.env.NODE_ENV === "development" && (
+        <DevMissionRatingWidget mission={mission} />
+      )}
     </main>
   );
 }

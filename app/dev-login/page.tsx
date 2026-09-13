@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Logo } from "@/components/Logo";
 import { DevLoginForm } from "@/components/DevLoginForm";
@@ -40,6 +41,13 @@ export default function DevLoginPage() {
       )}
 
       <DevResetTodayButton />
+
+      <Link
+        href="/dev-ratings"
+        className="relative z-10 touch-manipulation mt-6 text-center text-xs text-ink-soft/60 underline underline-offset-4"
+      >
+        推薦品質の評価ログを見る
+      </Link>
     </main>
   );
 }
