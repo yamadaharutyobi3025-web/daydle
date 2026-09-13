@@ -3,10 +3,15 @@ import { notFound } from "next/navigation";
 import { Logo } from "@/components/Logo";
 import { PhoneModeBadge } from "@/components/PhoneModeBadge";
 import { PostTriers } from "@/components/PostTriers";
+import { PostCard } from "@/components/PostCard";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { dateKey, formatJapaneseDate } from "@/lib/date";
 import type { AllowedTool } from "@/types/mission";
+import type { PostWithProfile } from "@/types/supabase";
+
+const OTHER_POSTS_COLUMNS =
+  "id, user_id, mission_text, duration_minutes, phone_mode, allowed_tools, note, comment, photo_path, created_at";
 
 /**
  * 投稿の詳細画面。「みんな」「フォロー中」どちらの投稿カードからも
@@ -28,7 +33,7 @@ export default async function PostDetailPage({
   const { data: post } = await supabase
     .from("posts")
     .select(
-      "id, mission_text, duration_minutes, phone_mode, allowed_tools, comment, photo_path, created_at, profiles!inner(username, display_name, avatar_url)"
+      "id, user_id, mission_text, duration_minutes, phone_mode, allowed_tools, comment, photo_path, created_at, profiles!inner(username, display_name, avatar_url)"
     )
     .eq("id", id)
     .maybeSingle();
@@ -36,6 +41,18 @@ export default async function PostDetailPage({
   if (!post) {
     notFound();
   }
+
+  // 「この人の他の遠回り」。postsの既存RLS（posts_select_visible）を
+  // そのまま使うだけで、権限は一切緩めない。公開投稿者なら誰でも、
+  // 非公開投稿者なら本人か承認済みフォロワーだけに絞り込まれた結果が
+  // 返る（このクエリ自身が権限チェックをしているわけではない）。
+  const { data: otherPosts } = await supabase
+    .from("posts")
+    .select(`${OTHER_POSTS_COLUMNS}, profiles!inner(username, display_name, avatar_url)`)
+    .eq("user_id", post.user_id)
+    .neq("id", id)
+    .order("created_at", { ascending: false })
+    .limit(3);
 
   let photoUrl: string | null = null;
   if (post.photo_path) {
@@ -98,6 +115,17 @@ export default async function PostDetailPage({
       )}
 
       <PostTriers postId={post.id} />
+
+      {otherPosts && otherPosts.length > 0 && (
+        <section className="mt-14 border-t border-line/60 pt-10">
+          <h2 className="text-[13px] text-ink-soft">この人の他の遠回り</h2>
+          <ul className="mt-4 flex flex-col gap-3">
+            {(otherPosts as unknown as PostWithProfile[]).map((other) => (
+              <PostCard key={other.id} post={other} />
+            ))}
+          </ul>
+        </section>
+      )}
     </main>
   );
 }
