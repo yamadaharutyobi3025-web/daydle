@@ -19,8 +19,8 @@ Supabase Auth + Postgres(RLS) + Storageを使う。
 1. **Auth基盤**（完了） — Supabase Auth、profiles、daily_completions同期
 2. **プロフィール編集**（完了） — username/display_name/avatar/bio/is_private
 3. **フォロー / フォロワー**（完了） — 公開即フォロー、非公開はリクエスト制
-4. 投稿（完了記録から選んで明示的に投稿、写真は署名付きURLで表示）
-5. 「みんな」画面のSupabase版（フォロー中のタイムライン）
+4. **投稿**（完了） — 完了記録から選んで明示的に投稿、写真は署名付きURLで表示、
+   「みんな」画面にフォロー中/みんなタブを追加（既存の静的な例はそのまま残す）
 
 ## スキーマ
 
@@ -106,20 +106,30 @@ create table public.follows (
 - 素の`follows`テーブルのRLSのselectは、本人が関わる行（follower or
   followee）のみ（自分の「フォロー中/フォロワー/自分宛の申請」の状態確認用）。
 
-### posts（段階4で作成予定）
+### posts（段階4で作成済み）
 
 ```sql
 create table public.posts (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users (id) on delete cascade,
   mission_text text not null,
+  duration_minutes integer not null,
+  phone_mode text not null check (phone_mode in ('offline', 'tool', 'connect')),
+  allowed_tools text[] not null default '{}',
   note text,
   photo_path text, -- 例: "{user_id}/{post_id}.jpg"（バケット内パス。URLではない）
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  constraint posts_user_id_profiles_fkey foreign key (user_id) references public.profiles (id) on delete cascade
 );
 ```
 
-Context情報・座標・いいね数・XPに相当する列は一切持たない。
+Context情報・座標・いいね数・XPに相当する列は一切持たない。`mission_text`
+（`mission.description`）/`duration_minutes`/`phone_mode`/`allowed_tools`は
+missionIdの参照ではなく、投稿時点で見えていた表示内容のスナップショット
+（ミッション自体が将来変わっても投稿は変わらないようにするため）。
+`user_id`にはauth.usersに加えてprofiles(id)への外部キーも付け、
+PostgRESTで`posts.select("*, profiles(...)")`のように直接埋め込めるように
+した（profiles.idは常にauth.users.idと一致するため矛盾しない）。
 
 RLS select（可視性）:
 
@@ -141,7 +151,7 @@ using (
 
 insert/deleteは本人のみ。updateは不可（記録の改変はしない。消すのは可）。
 
-### Storage: `post-photos`（private bucket、段階4で作成予定）
+### Storage: `post-photos`（private bucket、段階4で作成済み）
 
 - バケットは常に**private**（`public: false`）。公開アカウント/非公開
   アカウントを問わず、これは変えない。
