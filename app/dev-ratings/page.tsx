@@ -20,8 +20,9 @@ export default function DevRatingsPage() {
         推薦品質の評価ログ
       </h1>
       <p className="mt-4 text-sm leading-[1.9] text-ink-soft">
-        開発環境専用です。「今日」画面で付けた◎/○/△/×の一覧と集計です。
-        この端末のlocalStorageだけに保存されており、Supabaseには送信されません。
+        開発環境専用の確認画面です。「今日」画面で本人アカウントが付けた
+        ◎/○/△/×の一覧と集計です。データはSupabaseに保存されており、
+        本人以外はログインしても見られません（RLSで制限）。
       </p>
       <DevRatingsView />
     </main>

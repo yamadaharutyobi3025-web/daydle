@@ -140,6 +140,51 @@ export type Database = {
           },
         ];
       };
+      mission_ratings: {
+        Row: {
+          id: string;
+          user_id: string;
+          date: string;
+          situation: "home" | "outside" | "transit" | "work_school" | "unsure" | null;
+          feeling:
+            | "tired"
+            | "bored"
+            | "calm_seeking"
+            | "want_to_do_something"
+            | "good_mood"
+            | "neutral"
+            | null;
+          mission_id: string;
+          mission_text: string;
+          rating: "great" | "good" | "meh" | "bad";
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          date: string;
+          situation?:
+            | "home"
+            | "outside"
+            | "transit"
+            | "work_school"
+            | "unsure"
+            | null;
+          feeling?:
+            | "tired"
+            | "bored"
+            | "calm_seeking"
+            | "want_to_do_something"
+            | "good_mood"
+            | "neutral"
+            | null;
+          mission_id: string;
+          mission_text: string;
+          rating: "great" | "good" | "meh" | "bad";
+        };
+        Update: never;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
