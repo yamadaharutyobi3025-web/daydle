@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Logo } from "@/components/Logo";
 import { DevLoginForm } from "@/components/DevLoginForm";
 import { DevResetTodayButton } from "@/components/DevResetTodayButton";
+import { DevClearLegacyDataButton } from "@/components/DevClearLegacyDataButton";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 /**
@@ -41,6 +42,7 @@ export default function DevLoginPage() {
       )}
 
       <DevResetTodayButton />
+      <DevClearLegacyDataButton />
 
       <Link
         href="/dev-ratings"

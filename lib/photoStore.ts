@@ -1,6 +1,8 @@
 /**
- * 「できた」写真の保存先。localStorageには画像を置かず、
- * IndexedDBへ日付をキーに1枚だけ保存する（クラウド送信はしない）。
+ * 「できた」写真は現在Supabase Storage（journal-photosバケット、
+ * lib/journal.ts）が正となっている。ここに残っているのは、アカウント
+ * 切り替え時にこの端末に残っている旧バージョンのIndexedDBデータを
+ * 消すためのclearAllPhotos()だけ（lib/accountBoundary.ts経由で呼ばれる）。
  */
 const DB_NAME = "daydle-photos";
 const STORE_NAME = "photos";
@@ -23,37 +25,17 @@ function openDB(): Promise<IDBDatabase> {
   });
 }
 
-/** 指定した日付の写真を保存する（同じ日付があれば上書き）。 */
-export async function savePhoto(date: string, blob: Blob): Promise<void> {
+/**
+ * 保存済みの写真を全件削除する。
+ * ログインアカウントが切り替わったとき（lib/accountBoundary.ts）に、
+ * 前のアカウントの写真を次のアカウントへ持ち越さないようにするために使う。
+ */
+export async function clearAllPhotos(): Promise<void> {
+  if (typeof indexedDB === "undefined") return;
   const db = await openDB();
   await new Promise<void>((resolve, reject) => {
     const tx = db.transaction(STORE_NAME, "readwrite");
-    tx.objectStore(STORE_NAME).put(blob, date);
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error);
-  });
-  db.close();
-}
-
-/** 指定した日付の写真を取得する。なければnull。 */
-export async function getPhoto(date: string): Promise<Blob | null> {
-  const db = await openDB();
-  const blob = await new Promise<Blob | null>((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, "readonly");
-    const req = tx.objectStore(STORE_NAME).get(date);
-    req.onsuccess = () => resolve((req.result as Blob | undefined) ?? null);
-    req.onerror = () => reject(req.error);
-  });
-  db.close();
-  return blob;
-}
-
-/** 指定した日付の写真を削除する。 */
-export async function deletePhoto(date: string): Promise<void> {
-  const db = await openDB();
-  await new Promise<void>((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, "readwrite");
-    tx.objectStore(STORE_NAME).delete(date);
+    tx.objectStore(STORE_NAME).clear();
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
   });

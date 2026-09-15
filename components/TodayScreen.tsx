@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { MissionPoster } from "@/components/MissionPoster";
@@ -18,7 +18,15 @@ import { trackEvent } from "@/lib/track";
 import { primeAudio } from "@/lib/timerAlert";
 import { postIdFromMissionId } from "@/lib/socialMissions";
 import { recordPostTryCompletion } from "@/lib/postTries";
-import { DevMissionRatingWidget } from "@/components/DevMissionRatingWidget";
+import { MissionRatingWidget } from "@/components/MissionRatingWidget";
+import { createClient } from "@/lib/supabase/client";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { insertCompletedJournalEntry } from "@/lib/journal";
+import {
+  getPendingCompletion,
+  setPendingCompletion,
+  clearPendingCompletion,
+} from "@/lib/pendingCompletion";
 
 export function TodayScreen({
   initial,
@@ -29,9 +37,38 @@ export function TodayScreen({
 }) {
   const router = useRouter();
   const [state, setState] = useState(initial);
+  const [completing, setCompleting] = useState(false);
+  const [completeError, setCompleteError] = useState<string | null>(null);
   const mission = findMissionById(state.missionId);
   const dateLabel = formatJapaneseDate(state.date);
   const canReroll = state.currentIndex < state.candidateIds.length - 1;
+
+  /**
+   * 「できた」を押した時点で未ログインだった場合、/loginへ遷移する前に
+   * lib/pendingCompletion.tsへ目印を残しておく。ログイン（メールの
+   * マジックリンク経由だと画面遷移をまたぐ）から戻ってきて、この画面が
+   * 再びマウントされたときに、その目印と現在のtodayの状態が一致し、
+   * かつ既にログイン済みであれば、ユーザーが「できた」を押し直さなくても
+   * 自動で完了処理を再開する。
+   */
+  useEffect(() => {
+    if (!mission) return;
+    if (state.status !== "accepted") return;
+    const pending = getPendingCompletion();
+    if (!pending || pending.date !== state.date || pending.missionId !== state.missionId) return;
+    if (!isSupabaseConfigured()) return;
+
+    let cancelled = false;
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      if (cancelled || !data.user) return;
+      void finishComplete(data.user.id, mission.description);
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.status, state.date, state.missionId]);
 
   if (!mission) {
     return (
@@ -64,7 +101,35 @@ export function TodayScreen({
     router.push("/timer");
   }
 
-  function handleComplete() {
+  /**
+   * journal_entriesへの書き込みが成功して初めて、ローカルの状態も
+   * 完了扱いにする。保存に失敗した場合はローカルだけ完了扱いにしない
+   * （ローカルとSupabaseの状態が食い違ったまま先に進めない）。
+   */
+  async function finishComplete(userId: string, missionText: string) {
+    setCompleting(true);
+    setCompleteError(null);
+
+    const supabase = createClient();
+    const { error } = await insertCompletedJournalEntry(supabase, {
+      userId,
+      date: state.date,
+      missionId: state.missionId,
+      missionText,
+    });
+
+    setCompleting(false);
+
+    if (error) {
+      setCompleteError(
+        error.alreadyCompleted
+          ? "今日はすでに記録済みです。"
+          : "保存に失敗しました。もう一度お試しください。"
+      );
+      return;
+    }
+
+    clearPendingCompletion();
     updateTodayMission((c) => ({ ...c, status: "completed" }));
     recordTodayHistory({
       date: state.date,
@@ -81,6 +146,29 @@ export function TodayScreen({
     if (postId) void recordPostTryCompletion(postId);
 
     router.push("/journal");
+  }
+
+  async function handleComplete() {
+    if (!mission || completing) return;
+    setCompleteError(null);
+
+    if (!isSupabaseConfigured()) {
+      setCompleteError("記録の保存に必要な設定が完了していません。");
+      return;
+    }
+
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      setPendingCompletion({ date: state.date, missionId: state.missionId });
+      router.push(`/login?next=${encodeURIComponent("/")}`);
+      return;
+    }
+
+    await finishComplete(user.id, mission.description);
   }
 
   function handleDecline() {
@@ -153,9 +241,12 @@ export function TodayScreen({
             <p className="text-center text-sm leading-loose text-ink-soft">
               今日はこの遠回りへ向かっています。
             </p>
-            <Button onClick={handleComplete} className="mt-2 w-full">
-              できた
+            <Button onClick={handleComplete} disabled={completing} className="mt-2 w-full">
+              {completing ? "保存中…" : "できた"}
             </Button>
+            {completeError && (
+              <p className="text-center text-xs text-red-700/80">{completeError}</p>
+            )}
             <div className="mt-1 flex items-center justify-center gap-4 text-xs text-ink-soft/60">
               <Link href="/timer" className="touch-manipulation -mx-2 -my-3 px-2 py-3">
                 タイマーを見る
@@ -197,9 +288,7 @@ export function TodayScreen({
         )}
       </div>
 
-      {process.env.NODE_ENV === "development" && (
-        <DevMissionRatingWidget mission={mission} />
-      )}
+      <MissionRatingWidget mission={mission} />
     </main>
   );
 }

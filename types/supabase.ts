@@ -140,6 +140,79 @@ export type Database = {
           },
         ];
       };
+      mission_ratings: {
+        Row: {
+          id: string;
+          user_id: string;
+          date: string;
+          situation: "home" | "outside" | "transit" | "work_school" | "unsure" | null;
+          feeling:
+            | "tired"
+            | "bored"
+            | "calm_seeking"
+            | "want_to_do_something"
+            | "good_mood"
+            | "neutral"
+            | null;
+          mission_id: string;
+          mission_text: string;
+          rating: "great" | "good" | "meh" | "bad";
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          date: string;
+          situation?:
+            | "home"
+            | "outside"
+            | "transit"
+            | "work_school"
+            | "unsure"
+            | null;
+          feeling?:
+            | "tired"
+            | "bored"
+            | "calm_seeking"
+            | "want_to_do_something"
+            | "good_mood"
+            | "neutral"
+            | null;
+          mission_id: string;
+          mission_text: string;
+          rating: "great" | "good" | "meh" | "bad";
+        };
+        Update: never;
+        Relationships: [];
+      };
+      journal_entries: {
+        Row: {
+          id: string;
+          user_id: string;
+          date: string;
+          mission_id: string;
+          mission_text: string;
+          reflection: "good" | "normal" | "meh" | "skipped" | null;
+          note: string | null;
+          photo_path: string | null;
+          completed_at: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          date: string;
+          mission_id: string;
+          mission_text: string;
+        };
+        Update: {
+          reflection?: "good" | "normal" | "meh" | "skipped" | null;
+          note?: string | null;
+          photo_path?: string | null;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {

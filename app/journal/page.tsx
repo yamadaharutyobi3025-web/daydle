@@ -5,15 +5,11 @@ import { useRouter } from "next/navigation";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/Button";
 import { CameraCapture } from "@/components/CameraCapture";
-import {
-  getTodayMission,
-  setJournalEntry,
-  NOTE_MAX_LENGTH,
-  type TodayMissionState,
-} from "@/lib/storage";
+import { getTodayMission, NOTE_MAX_LENGTH, type TodayMissionState } from "@/lib/storage";
 import { useClientSnapshot, UNLOADED } from "@/lib/useClientSnapshot";
 import { compressImage } from "@/lib/imageCompress";
-import { savePhoto } from "@/lib/photoStore";
+import { createClient } from "@/lib/supabase/client";
+import { updateJournalEntry, uploadJournalPhoto } from "@/lib/journal";
 
 export default function JournalPage() {
   const router = useRouter();
@@ -26,6 +22,7 @@ export default function JournalPage() {
   const [isProcessingPhoto, setIsProcessingPhoto] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     return () => {
@@ -78,19 +75,55 @@ export default function JournalPage() {
   async function handleSave() {
     if (isSaving || !today || today === UNLOADED) return;
     setIsSaving(true);
-    try {
-      if (photoBlob) {
-        await savePhoto(today.date, photoBlob);
-      }
-      setJournalEntry(today.date, {
-        note: note.trim() ? note.trim() : null,
-        hasPhoto: Boolean(photoBlob),
-      });
-    } catch {
-      // 保存に失敗しても、この記録自体は必須ではないため先へ進む
-    } finally {
-      router.push("/complete");
+    setErrorMessage("");
+
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    // 「できた」の時点でログイン確認済みのはずだが、その後セッションが
+    // 切れた場合に備えたフォールバック。ここではローカルだけ保存扱いに
+    // せず、ログインへ戻す（保存失敗をそのまま握りつぶさない）。
+    if (!user) {
+      router.push(`/login?next=${encodeURIComponent("/journal")}`);
+      setIsSaving(false);
+      return;
     }
+
+    try {
+      let photoPath: string | null = null;
+      if (photoBlob) {
+        const { path, error: uploadError } = await uploadJournalPhoto(
+          supabase,
+          user.id,
+          today.date,
+          photoBlob
+        );
+        if (uploadError) {
+          setErrorMessage(`写真の保存に失敗しました: ${uploadError}`);
+          setIsSaving(false);
+          return;
+        }
+        photoPath = path;
+      }
+
+      const { error } = await updateJournalEntry(supabase, today.date, {
+        note: note.trim() ? note.trim() : null,
+        photoPath,
+      });
+      if (error) {
+        setErrorMessage("記録の保存に失敗しました。もう一度お試しください。");
+        setIsSaving(false);
+        return;
+      }
+    } catch {
+      setErrorMessage("記録の保存に失敗しました。もう一度お試しください。");
+      setIsSaving(false);
+      return;
+    }
+
+    router.push("/complete");
   }
 
   if (showCamera) {
@@ -160,7 +193,7 @@ export default function JournalPage() {
           className="hidden"
         />
         <p className="text-center text-[11px] leading-relaxed text-ink-soft/60">
-          写真はこの端末にだけ保存されます。
+          写真はあなたのアカウントにだけ保存され、他の人には見えません。
         </p>
       </div>
 
@@ -178,9 +211,13 @@ export default function JournalPage() {
         </p>
       </div>
 
+      {errorMessage && (
+        <p className="mt-4 text-center text-xs text-red-700/80">{errorMessage}</p>
+      )}
+
       <div className="mt-auto pt-10">
         <Button onClick={handleSave} disabled={isSaving} className="w-full">
-          残す
+          {isSaving ? "保存中…" : "残す"}
         </Button>
       </div>
     </main>

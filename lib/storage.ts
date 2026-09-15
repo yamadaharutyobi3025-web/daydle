@@ -230,6 +230,24 @@ export function clearTodayMission(): void {
 }
 
 /**
+ * この端末に保存されている個人データ（今日のミッション状態・履歴・
+ * 解放通知の既読・状況コンテキスト）を全て消す。
+ *
+ * ログインアカウントが切り替わったとき（lib/accountBoundary.ts）に、
+ * 前のアカウントのデータを次のアカウントへ持ち越さないようにするために使う。
+ * resetTodayForDevTesting（開発環境専用・今日分のみ）とは別物で、
+ * こちらは本番でも動作し、履歴全体を対象にする。
+ */
+export function clearAllLocalPersonalData(): void {
+  saveState({
+    today: null,
+    history: [],
+    seenUnlocks: [],
+    context: { ...defaultContext },
+  });
+}
+
+/**
  * 開発環境専用。今日のtodayMission（situation/feeling/missionIdは
  * lib/todayContext.ts側でクリア）と、今日分の履歴（完了状態）だけを
  * この端末上でリセットし、WelcomeFlowの2問から再テストできるようにする。
@@ -284,26 +302,6 @@ export function recordTodayHistory(entry: HistoryEntry): void {
   saveState(state);
 }
 
-export function setReflection(date: string, reflection: Reflection): void {
-  const state = loadState();
-  const idx = state.history.findIndex((h) => h.date === date);
-  if (idx === -1) return;
-  state.history[idx] = { ...state.history[idx], reflection };
-  saveState(state);
-}
-
-/** できた後の「ひとこと」「写真の有無」を、その日の記録へ追記する。 */
-export function setJournalEntry(
-  date: string,
-  patch: { note?: string | null; hasPhoto?: boolean }
-): void {
-  const state = loadState();
-  const idx = state.history.findIndex((h) => h.date === date);
-  if (idx === -1) return;
-  state.history[idx] = { ...state.history[idx], ...patch };
-  saveState(state);
-}
-
 /**
  * 1日1遠回りの共通判定。今日すでにcompletedの記録が1件でもあればtrue。
  * 「今日」「みんな」「共有カード」等、新しいmissionをaccepted状態にしうる
@@ -312,15 +310,6 @@ export function setJournalEntry(
 export function hasCompletedToday(): boolean {
   const key = todayKey();
   return getHistory().some((h) => h.date === key && h.status === "completed");
-}
-
-/** その日が、何回目の「完了した遠回り」かを返す（古い順に1から数える）。 */
-export function getDetourNumber(date: string): number {
-  const completed = getHistory()
-    .filter((h) => h.status === "completed")
-    .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
-  const idx = completed.findIndex((h) => h.date === date);
-  return idx === -1 ? completed.length : idx + 1;
 }
 
 export function getHistory(): HistoryEntry[] {

@@ -6,8 +6,13 @@ import Link from "next/link";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/Button";
 import { findMissionById } from "@/lib/missionSelector";
-import { getHistory, getDetourNumber } from "@/lib/storage";
-import { getPhoto } from "@/lib/photoStore";
+import { createClient } from "@/lib/supabase/client";
+import {
+  fetchJournalEntries,
+  fetchJournalEntryForDate,
+  computeDetourNumber,
+  getJournalPhotoUrl,
+} from "@/lib/journal";
 import { generateShareCard } from "@/lib/shareCard";
 import { getPhoneModeLabel } from "@/components/PhoneModeBadge";
 import { useClientSnapshot } from "@/lib/useClientSnapshot";
@@ -37,25 +42,34 @@ export default function ShareCardPage() {
     let cancelled = false;
 
     (async () => {
-      const entry = getHistory().find((h) => h.date === date);
+      const supabase = createClient();
+      const entry = await fetchJournalEntryForDate(supabase, date);
       if (!entry) {
+        // 未ログイン・他ユーザーの日付・記録なし、いずれもRLSにより
+        // 同じ「見つからない」結果になる（他ユーザーの記録の有無自体を
+        // 漏らさないため、ここで場合分けはしない）。
         if (!cancelled) setStatus("not-found");
         return;
       }
-      const mission = findMissionById(entry.missionId);
+      const mission = findMissionById(entry.mission_id);
       if (!mission) {
         if (!cancelled) setStatus("not-found");
         return;
       }
       try {
         let photoBlob: Blob | null = null;
-        if (entry.hasPhoto) {
+        if (entry.photo_path) {
           try {
-            photoBlob = await getPhoto(date);
+            const url = await getJournalPhotoUrl(supabase, entry.photo_path);
+            if (url) {
+              const res = await fetch(url);
+              photoBlob = await res.blob();
+            }
           } catch (err) {
             console.error("Failed to load photo for share card:", err);
           }
         }
+        const allEntries = await fetchJournalEntries(supabase);
         const blob = await generateShareCard({
           missionDescription: mission.description,
           photoBlob,
@@ -64,7 +78,7 @@ export default function ShareCardPage() {
           durationDisplayTier: mission.displayDuration,
           phoneModeLabel: getPhoneModeLabel(mission.phoneMode, mission.allowedTools),
           dateKey: date,
-          detourNumber: getDetourNumber(date),
+          detourNumber: computeDetourNumber(allEntries, date),
         });
         if (cancelled) return;
         objectUrl = URL.createObjectURL(blob);
