@@ -230,6 +230,24 @@ export function clearTodayMission(): void {
 }
 
 /**
+ * この端末に保存されている個人データ（今日のミッション状態・履歴・
+ * 解放通知の既読・状況コンテキスト）を全て消す。
+ *
+ * ログインアカウントが切り替わったとき（lib/accountBoundary.ts）に、
+ * 前のアカウントのデータを次のアカウントへ持ち越さないようにするために使う。
+ * resetTodayForDevTesting（開発環境専用・今日分のみ）とは別物で、
+ * こちらは本番でも動作し、履歴全体を対象にする。
+ */
+export function clearAllLocalPersonalData(): void {
+  saveState({
+    today: null,
+    history: [],
+    seenUnlocks: [],
+    context: { ...defaultContext },
+  });
+}
+
+/**
  * 開発環境専用。今日のtodayMission（situation/feeling/missionIdは
  * lib/todayContext.ts側でクリア）と、今日分の履歴（完了状態）だけを
  * この端末上でリセットし、WelcomeFlowの2問から再テストできるようにする。

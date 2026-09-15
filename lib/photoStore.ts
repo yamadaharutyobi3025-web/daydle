@@ -59,3 +59,20 @@ export async function deletePhoto(date: string): Promise<void> {
   });
   db.close();
 }
+
+/**
+ * 保存済みの写真を全件削除する。
+ * ログインアカウントが切り替わったとき（lib/accountBoundary.ts）に、
+ * 前のアカウントの写真を次のアカウントへ持ち越さないようにするために使う。
+ */
+export async function clearAllPhotos(): Promise<void> {
+  if (typeof indexedDB === "undefined") return;
+  const db = await openDB();
+  await new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, "readwrite");
+    tx.objectStore(STORE_NAME).clear();
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+  db.close();
+}
