@@ -185,6 +185,34 @@ export type Database = {
         Update: never;
         Relationships: [];
       };
+      journal_entries: {
+        Row: {
+          id: string;
+          user_id: string;
+          date: string;
+          mission_id: string;
+          mission_text: string;
+          reflection: "good" | "normal" | "meh" | "skipped" | null;
+          note: string | null;
+          photo_path: string | null;
+          completed_at: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          date: string;
+          mission_id: string;
+          mission_text: string;
+        };
+        Update: {
+          reflection?: "good" | "normal" | "meh" | "skipped" | null;
+          note?: string | null;
+          photo_path?: string | null;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {

@@ -302,26 +302,6 @@ export function recordTodayHistory(entry: HistoryEntry): void {
   saveState(state);
 }
 
-export function setReflection(date: string, reflection: Reflection): void {
-  const state = loadState();
-  const idx = state.history.findIndex((h) => h.date === date);
-  if (idx === -1) return;
-  state.history[idx] = { ...state.history[idx], reflection };
-  saveState(state);
-}
-
-/** できた後の「ひとこと」「写真の有無」を、その日の記録へ追記する。 */
-export function setJournalEntry(
-  date: string,
-  patch: { note?: string | null; hasPhoto?: boolean }
-): void {
-  const state = loadState();
-  const idx = state.history.findIndex((h) => h.date === date);
-  if (idx === -1) return;
-  state.history[idx] = { ...state.history[idx], ...patch };
-  saveState(state);
-}
-
 /**
  * 1日1遠回りの共通判定。今日すでにcompletedの記録が1件でもあればtrue。
  * 「今日」「みんな」「共有カード」等、新しいmissionをaccepted状態にしうる
@@ -330,15 +310,6 @@ export function setJournalEntry(
 export function hasCompletedToday(): boolean {
   const key = todayKey();
   return getHistory().some((h) => h.date === key && h.status === "completed");
-}
-
-/** その日が、何回目の「完了した遠回り」かを返す（古い順に1から数える）。 */
-export function getDetourNumber(date: string): number {
-  const completed = getHistory()
-    .filter((h) => h.status === "completed")
-    .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
-  const idx = completed.findIndex((h) => h.date === date);
-  return idx === -1 ? completed.length : idx + 1;
 }
 
 export function getHistory(): HistoryEntry[] {

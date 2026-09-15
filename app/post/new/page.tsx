@@ -8,9 +8,8 @@ import { Button } from "@/components/Button";
 import { PhoneModeBadge } from "@/components/PhoneModeBadge";
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
-import { getHistory } from "@/lib/storage";
+import { fetchJournalEntryForDate, getJournalPhotoUrl } from "@/lib/journal";
 import { findMissionById } from "@/lib/missionSelector";
-import { getPhoto } from "@/lib/photoStore";
 import { todayKey } from "@/lib/date";
 import { formatDurationLabel } from "@/lib/durationDisplay";
 import type { Mission } from "@/types/mission";
@@ -56,25 +55,23 @@ export default function NewPostPage() {
         return;
       }
 
-      const entry = getHistory().find(
-        (h) => h.date === todayKey() && h.status === "completed"
-      );
-      if (!entry) {
-        setStatus("no-entry");
-        return;
-      }
-      const m = findMissionById(entry.missionId);
-      if (!m) {
-        setStatus("no-entry");
-        return;
-      }
-
       const supabase = createClient();
       const {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) {
         setStatus("need-login");
+        return;
+      }
+
+      const entry = await fetchJournalEntryForDate(supabase, todayKey());
+      if (!entry) {
+        setStatus("no-entry");
+        return;
+      }
+      const m = findMissionById(entry.mission_id);
+      if (!m) {
+        setStatus("no-entry");
         return;
       }
 
@@ -90,9 +87,11 @@ export default function NewPostPage() {
         return;
       }
 
-      if (entry.hasPhoto) {
-        const blob = await getPhoto(entry.date);
-        if (blob) {
+      if (entry.photo_path) {
+        const url = await getJournalPhotoUrl(supabase, entry.photo_path);
+        if (url) {
+          const res = await fetch(url);
+          const blob = await res.blob();
           setPhotoBlob(blob);
           setPhotoPreviewUrl(URL.createObjectURL(blob));
         }

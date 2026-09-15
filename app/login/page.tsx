@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { Suspense, useState, type FormEvent } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/Button";
 import { createClient } from "@/lib/supabase/client";
@@ -9,7 +10,9 @@ import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 type Status = "idle" | "sending" | "sent" | "error";
 
-export default function LoginPage() {
+function LoginForm() {
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next");
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<Status>("idle");
   const [errorMessage, setErrorMessage] = useState("");
@@ -20,10 +23,12 @@ export default function LoginPage() {
     setErrorMessage("");
 
     const supabase = createClient();
+    const callbackUrl = new URL("/auth/callback", window.location.origin);
+    if (next) callbackUrl.searchParams.set("next", next);
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: callbackUrl.toString(),
       },
     });
 
@@ -42,11 +47,10 @@ export default function LoginPage() {
         ログイン
       </h1>
       <p className="mt-4 text-sm leading-[1.9] text-ink-soft">
-        Social機能（プロフィール・フォロー・投稿）を使う場合のみ、
+        今日の遠回りを「できた」にする・写真や記録を残す・Social機能
+        （プロフィール・フォロー・投稿）を使うには、ログインが必要です。
         <br />
-        ログインが必要です。
-        <br />
-        使わない場合はそのままアプリを使い続けられます。
+        遠回りを見るだけならログイン不要です。
       </p>
 
       {!isSupabaseConfigured() ? (
@@ -88,5 +92,13 @@ export default function LoginPage() {
         </Link>
       )}
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
   );
 }
